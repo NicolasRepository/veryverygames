@@ -31,8 +31,8 @@
   --purple:#b06bff;
   --gold:#ffd23f;
 
-  --cell:clamp(30px, 8.6vw, 52px);
-  --gap:4px;
+  --cell:clamp(38px, 6.2vw, 78px);
+  --gap:5px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
@@ -50,52 +50,52 @@ h1,h2,h3,.num,button{font-family:'Chakra Petch',sans-serif}
 button{font-size:1rem;color:inherit;cursor:pointer}
 button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 
-.app{max-width:1180px;margin:0 auto;padding:18px 16px 40px}
+.app{max-width:1760px;min-height:100vh;margin:0 auto;padding:20px 28px 32px;display:flex;flex-direction:column}
 
 /* ---------- topo ---------- */
-.topbar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.topbar{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:20px}
 .topbar h1{
-  margin:0;font-size:1.6rem;letter-spacing:.02em;
+  margin:0;font-size:2.1rem;letter-spacing:.02em;
   background:linear-gradient(90deg,var(--red),var(--purple) 55%,var(--blue));
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
 .stage-tag{
-  font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:.85rem;
+  font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:1rem;
   color:var(--brass);border:1px solid rgba(230,178,92,.4);
-  background:rgba(230,178,92,.09);padding:4px 12px;border-radius:999px;
+  background:rgba(230,178,92,.09);padding:5px 14px;border-radius:999px;
 }
 .topbar .spacer{flex:1}
 .ghost-btn{
   background:transparent;border:1px solid var(--line);border-radius:9px;
-  padding:7px 14px;font-size:.85rem;font-weight:600;color:var(--muted);
+  padding:9px 16px;font-size:.92rem;font-weight:600;color:var(--muted);
 }
 .ghost-btn:hover{color:var(--ink);border-color:var(--brass)}
 
 /* ---------- layout ---------- */
-.stage{display:grid;grid-template-columns:230px minmax(0,1fr) 230px;gap:18px;align-items:start}
-@media (max-width:900px){
-  .stage{grid-template-columns:1fr 1fr;gap:12px}
+.stage{flex:1;display:grid;grid-template-columns:300px minmax(0,1fr) 300px;gap:26px;align-items:start}
+@media (max-width:1000px){
+  .stage{grid-template-columns:1fr 1fr;gap:14px}
   .board-col{grid-column:1/-1;order:3}
 }
 
 .panel{
   background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
-  border:1px solid var(--line);border-radius:16px;padding:16px;
+  border:1px solid var(--line);border-radius:18px;padding:22px;
 }
-.panel h2{margin:0 0 4px;font-size:1.05rem}
-.panel .sub{color:var(--muted);font-size:.82rem;margin:0 0 14px;line-height:1.4}
+.panel h2{margin:0 0 4px;font-size:1.3rem}
+.panel .sub{color:var(--muted);font-size:.92rem;margin:0 0 16px;line-height:1.45}
 
 .bar{height:14px;border-radius:999px;background:rgba(0,0,0,.4);overflow:hidden;border:1px solid var(--line)}
 .bar > i{display:block;height:100%;transition:width .3s ease}
 .hp-fill{background:linear-gradient(90deg,#ff6b6b,var(--red))}
 .enemy-fill{background:linear-gradient(90deg,#ff9a3c,var(--red))}
-.stat-row{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 5px;font-size:.8rem;color:var(--muted)}
-.stat-row .num{font-size:1.05rem;color:var(--ink);font-weight:600}
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 6px;font-size:.9rem;color:var(--muted)}
+.stat-row .num{font-size:1.2rem;color:var(--ink);font-weight:600}
 
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;min-height:30px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;min-height:34px}
 .chip{
-  display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;
-  padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.25);
+  display:inline-flex;align-items:center;gap:6px;font-size:.86rem;font-weight:600;
+  padding:6px 12px;border-radius:9px;border:1px solid var(--line);background:rgba(0,0,0,.25);
 }
 .chip.block{color:var(--blue);border-color:rgba(68,168,255,.45)}
 .chip.poison{color:var(--purple);border-color:rgba(176,107,255,.45)}
@@ -103,25 +103,25 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
 .chip.pop{animation:pop .3s ease}
 @keyframes pop{from{transform:scale(1.35)}to{transform:scale(1)}}
 
-.enemy-face{font-size:2.6rem;line-height:1;margin-bottom:8px;display:block}
+.enemy-face{font-size:3.4rem;line-height:1;margin-bottom:10px;display:block}
 .intent{
-  margin-top:14px;padding:12px;border-radius:12px;
+  margin-top:16px;padding:14px;border-radius:12px;
   border:1px dashed rgba(255,255,255,.18);background:rgba(0,0,0,.25);
 }
-.intent .label{font-size:.72rem;color:var(--muted);margin-bottom:5px}
-.intent .value{display:flex;align-items:center;gap:8px;font-family:'Chakra Petch',sans-serif;font-weight:600}
-.intent .value b{font-size:1.25rem}
-.intent .hint{font-size:.76rem;color:var(--muted);margin-top:6px;line-height:1.4}
+.intent .label{font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.intent .value{display:flex;align-items:center;gap:8px;font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:1.05rem}
+.intent .value b{font-size:1.4rem}
+.intent .hint{font-size:.84rem;color:var(--muted);margin-top:7px;line-height:1.45}
 
 /* ---------- tabuleiro ---------- */
-.board-col{display:flex;flex-direction:column;align-items:center;gap:14px}
+.board-col{display:flex;flex-direction:column;align-items:center;gap:18px;justify-content:center}
 #board{
   display:grid;gap:var(--gap);padding:var(--gap);
-  background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;
+  background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:16px;
   touch-action:none;
 }
 .cell{
-  width:var(--cell);height:var(--cell);border-radius:7px;
+  width:var(--cell);height:var(--cell);border-radius:8px;
   background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
   transition:background .12s ease, box-shadow .12s ease;
 }
@@ -135,33 +135,33 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
   100%{transform:scale(.6);filter:brightness(1);opacity:.2}
 }
 
-.turn-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+.turn-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
 .end-turn{
-  border:none;border-radius:11px;padding:12px 26px;font-weight:700;font-size:1rem;
+  border:none;border-radius:12px;padding:15px 32px;font-weight:700;font-size:1.15rem;
   color:#0a0d1a;background:linear-gradient(180deg,#ffd98a,var(--brass));
   box-shadow:0 4px 0 rgba(0,0,0,.35);
 }
 .end-turn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
 .end-turn:disabled{opacity:.45;cursor:not-allowed}
-.tip{color:var(--muted);font-size:.82rem;max-width:34ch;text-align:center;line-height:1.45}
+.tip{color:var(--muted);font-size:.92rem;max-width:42ch;text-align:center;line-height:1.5}
 
 /* ---------- mão ---------- */
-.hand-wrap{width:100%}
+.hand-wrap{width:100%;max-width:760px}
 .hand{
-  display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
-  padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.2);
-  min-height:96px;align-items:center;
+  display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
+  padding:18px;border-radius:16px;border:1px solid var(--line);background:rgba(0,0,0,.2);
+  min-height:126px;align-items:center;
 }
-.hand:empty::after{content:"Mão vazia — passe o turno para comprar.";color:var(--muted);font-size:.85rem}
+.hand:empty::after{content:"Mão vazia — passe o turno para comprar.";color:var(--muted);font-size:.95rem}
 .piece{
-  display:grid;gap:3px;padding:10px;border-radius:12px;cursor:grab;
+  display:grid;gap:4px;padding:13px;border-radius:14px;cursor:grab;
   background:rgba(255,255,255,.035);border:1px solid var(--line);
   transition:transform .12s ease,border-color .12s ease,background .12s ease;
 }
 .piece:hover{transform:translateY(-3px);background:rgba(255,255,255,.07)}
 .piece.selected{border-color:var(--brass);background:rgba(230,178,92,.12);transform:translateY(-4px)}
 .piece.unplayable{opacity:.4}
-.piece .blk{width:15px;height:15px;border-radius:4px}
+.piece .blk{width:20px;height:20px;border-radius:5px}
 .piece .blk.off{background:transparent}
 .drag-ghost{
   position:fixed;z-index:60;pointer-events:none;opacity:.85;
@@ -171,7 +171,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
 .drag-ghost .blk.off{background:transparent}
 
 /* ---------- log ---------- */
-.log{margin-top:16px;max-height:170px;overflow:auto;font-size:.82rem;line-height:1.55;color:var(--muted)}
+.log{margin-top:18px;max-height:220px;overflow:auto;font-size:.9rem;line-height:1.6;color:var(--muted)}
 .log p{margin:0 0 5px}
 .log b{color:var(--ink);font-weight:600}
 
@@ -182,15 +182,15 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
 }
 .overlay[hidden]{display:none}
 .modal{
-  background:var(--panel);border:1px solid var(--line);border-radius:20px;
-  padding:28px;max-width:620px;width:100%;text-align:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:22px;
+  padding:34px;max-width:700px;width:100%;text-align:center;
 }
-.modal h2{margin:0 0 8px;font-size:1.6rem}
-.modal p{color:var(--muted);margin:0 0 22px;line-height:1.6}
-.rewards{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.modal h2{margin:0 0 8px;font-size:1.85rem}
+.modal p{color:var(--muted);margin:0 0 24px;line-height:1.6;font-size:1rem}
+.rewards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
 .reward{
-  background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;
-  padding:16px;width:160px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;
+  background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;
+  padding:18px;width:180px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;
 }
 .reward:hover{transform:translateY(-4px);border-color:var(--brass)}
 .reward .mini{display:grid;gap:3px;justify-content:center;margin-bottom:12px;min-height:40px;align-content:center}
@@ -215,7 +215,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
     <!-- jogador -->
     <section class="panel" aria-label="Jogador">
       <h2>Você</h2>
-      <p class="sub">Encaixe peças para agir. O escudo some no início do seu turno.</p>
+      <p class="sub">Peças só agem ao completar uma linha/coluna. O escudo some no início do seu turno.</p>
       <div class="stat-row"><span>Vida</span><span class="num"><span id="pHp">60</span>/<span id="pMaxHp">60</span></span></div>
       <div class="bar"><i class="hp-fill" id="pHpBar" style="width:100%"></i></div>
       <div class="chips" id="pChips"></div>
@@ -230,7 +230,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
       <div class="turn-bar">
         <button class="end-turn" id="endTurnBtn">Passar o turno</button>
       </div>
-      <p class="tip" id="tip">Clique numa peça e depois no tabuleiro — ou arraste. Completar uma linha ou coluna limpa o espaço e causa dano.</p>
+      <p class="tip" id="tip">Clique numa peça e depois no tabuleiro — ou arraste. As peças só fazem efeito quando completam uma linha ou coluna — limpar várias de uma vez multiplica o resultado.</p>
       <div class="hand-wrap"><div class="hand" id="hand"></div></div>
     </div>
 
@@ -278,10 +278,12 @@ const CONFIG = {
   MAX_HAND: 7,            // teto da mão ao comprar peças de bônus
   PLAYER_MAX_HP: 60,
 
-  // Bônus por limpar linha/coluna cheia
-  LINE_CLEAR_DAMAGE: 4,   // dano por linha limpa
-  LINE_CLEAR_DRAW: 1,     // peças compradas por linha limpa
-  COMBO_BONUS: 0.5,       // +50% de dano por linha extra limpa no mesmo encaixe
+  // Bônus por limpar linha/coluna cheia. O efeito das peças (dano, cura,
+  // escudo, veneno) só dispara quando a linha/coluna que as contém é
+  // completada — ver Game.playPiece(). LINE_CLEAR_DRAW é só a compra extra;
+  // o multiplicador de dano/cura/escudo/veneno é sempre = lineCount
+  // (1 linha = x1, 2 linhas de uma vez = x2, 3 = x3...).
+  LINE_CLEAR_DRAW: 1,     // peças compradas por linha limpa (x lineCount)
 
   // Geração procedural (detalhes em EnemyFactory)
   ENEMY_BASE_HP: 32,
@@ -449,7 +451,11 @@ class Board {
       r >= 0 && c >= 0 && r < this.size && c < this.size && !this.grid[r][c]);
   }
   place(piece, row, col) {
-    this.cellsAt(piece, row, col).forEach(([r, c]) => { this.grid[r][c] = piece.colorKey; });
+    // Cada célula guarda a cor e o "power" da peça que a preencheu — é isso
+    // que o efeito usa quando a linha/coluna finalmente é completada.
+    this.cellsAt(piece, row, col).forEach(([r, c]) => {
+      this.grid[r][c] = { color: piece.colorKey, power: piece.power };
+    });
   }
   // Existe algum encaixe válido para esta peça, em qualquer rotação?
   hasRoomFor(piece) {
@@ -462,15 +468,25 @@ class Board {
     }
     return false;
   }
-  // Retorna as células das linhas/colunas cheias (sem apagar ainda)
+  /* Retorna as linhas/colunas cheias (sem apagar ainda):
+     - lineCount: quantas linhas E colunas estão cheias ao mesmo tempo —
+       é esse número que vira o multiplicador (x2, x3, x4...).
+     - cells: células únicas a limpar (uma célula no cruzamento de uma
+       linha cheia com uma coluna cheia não é contada duas vezes aqui). */
   findFullLines() {
-    const cells = [];
-    let count = 0;
+    const cellSet = new Map();
+    let lineCount = 0;
     for (let r = 0; r < this.size; r++)
-      if (this.grid[r].every(Boolean)) { count++; for (let c = 0; c < this.size; c++) cells.push([r, c]); }
+      if (this.grid[r].every(Boolean)) {
+        lineCount++;
+        for (let c = 0; c < this.size; c++) cellSet.set(r + ':' + c, [r, c]);
+      }
     for (let c = 0; c < this.size; c++)
-      if (this.grid.every(row => row[c])) { count++; for (let r = 0; r < this.size; r++) cells.push([r, c]); }
-    return { count, cells };
+      if (this.grid.every(row => row[c])) {
+        lineCount++;
+        for (let r = 0; r < this.size; r++) cellSet.set(r + ':' + c, [r, c]);
+      }
+    return { lineCount, cells: [...cellSet.values()] };
   }
   clearCells(cells) { cells.forEach(([r, c]) => { this.grid[r][c] = null; }); }
 }
@@ -650,7 +666,8 @@ class Game {
     this.checkEnemyDeath();
   }
 
-  /* Joga uma peça da mão no tabuleiro. Retorna true se encaixou. */
+  /* Joga uma peça da mão no tabuleiro. A peça em si não faz nada ainda —
+     ela só deixa cor e "power" gravados nas células. Retorna true se encaixou. */
   playPiece(piece, row, col) {
     if (this.state !== 'playing') return false;
     if (!this.board.canPlace(piece, row, col)) return false;
@@ -659,26 +676,46 @@ class Game {
     this.hand = this.hand.filter(p => p.id !== piece.id);
     this.deck.discard.push(piece);
 
-    // 1) efeito da própria peça (escala com a quantidade de blocos)
-    piece.effect.apply(this, piece.value);
-    if (this.state !== 'playing') return true;   // inimigo caiu com o efeito da peça
-
-    // 2) bônus de linhas/colunas completas
-    const { count, cells } = this.board.findFullLines();
-    if (count > 0) {
-      this.ui.flashCells(cells);
-      this.board.clearCells(cells);
-      const mult = 1 + (count - 1) * CONFIG.COMBO_BONUS;
-      const dmg = Math.round(CONFIG.LINE_CLEAR_DAMAGE * count * mult);
-      this.log(`<b>${count} linha${count > 1 ? 's' : ''} limpa${count > 1 ? 's' : ''}!</b> +${dmg} de dano.`);
-      this.dealDamageToEnemy(dmg, 'linha');
-      const room = CONFIG.MAX_HAND - this.hand.length;
-      const drawn = this.deck.draw(Math.min(room, CONFIG.LINE_CLEAR_DRAW * count));
-      this.hand.push(...drawn);
-    }
+    this.resolveLineClears();
 
     if (this.state === 'playing') this.ui.render();
     return true;
+  }
+
+  /* Efeitos só acontecem aqui, quando uma ou mais linhas/colunas fecham.
+     Todo cor presente nas células limpas soma seu valor (blocos * perBlock
+     * power de cada célula) e o total é multiplicado por lineCount — ou
+     seja, limpar 2 linhas de uma vez dobra o efeito, 3 triplica, 4
+     quadruplica, e assim por diante. */
+  resolveLineClears() {
+    const { lineCount, cells } = this.board.findFullLines();
+    if (lineCount === 0) return;
+
+    this.ui.flashCells(cells);
+
+    // soma por cor antes de apagar o tabuleiro
+    const totals = {}; // { red: 7, blue: 4, ... }
+    cells.forEach(([r, c]) => {
+      const data = this.board.grid[r][c];
+      const perBlock = EFFECTS[data.color].perBlock;
+      totals[data.color] = (totals[data.color] || 0) + perBlock * data.power;
+    });
+
+    this.board.clearCells(cells);
+
+    this.log(`<b>${lineCount} linha${lineCount > 1 ? 's' : ''} limpa${lineCount > 1 ? 's' : ''}!</b>` +
+      (lineCount > 1 ? ` Multiplicador x${lineCount}.` : ''));
+
+    // aplica cada cor presente, já multiplicada por lineCount
+    for (const color of Object.keys(totals)) {
+      const value = Math.round(totals[color] * lineCount);
+      if (value > 0) EFFECTS[color].apply(this, value);
+      if (this.state !== 'playing') return; // inimigo pode morrer no meio da soma
+    }
+
+    const room = CONFIG.MAX_HAND - this.hand.length;
+    const drawn = this.deck.draw(Math.min(room, CONFIG.LINE_CLEAR_DRAW * lineCount));
+    this.hand.push(...drawn);
   }
 
   checkEnemyDeath() {
@@ -854,10 +891,10 @@ class UI {
     cells.forEach(([r, c]) => {
       const el = this.cellAt(r, c);
       if (!el) return;
-      const color = this.game.board.grid[r][c];
+      const data = this.game.board.grid[r][c];
       this.flashing.add(r + ':' + c);
       el.className = 'cell filled clearing';
-      if (color) el.style.background = EFFECTS[color].css;
+      if (data) el.style.background = EFFECTS[data.color].css;
       setTimeout(() => {
         this.flashing.delete(r + ':' + c);
         el.className = 'cell';
@@ -895,7 +932,7 @@ class UI {
       const node = document.createElement('div');
       node.className = 'piece';
       node.tabIndex = 0;
-      node.title = `${piece.name} — ${piece.effect.describe(piece.value)}`;
+      node.title = `${piece.name} — ativa ${piece.effect.describe(piece.value)} quando completar uma linha/coluna`;
       node.setAttribute('aria-label', node.title);
       if (this.selected && this.selected.id === piece.id) node.classList.add('selected');
       if (!this.game.board.hasRoomFor(piece)) node.classList.add('unplayable');
@@ -916,7 +953,7 @@ class UI {
         this.selected = (this.selected && this.selected.id === piece.id) ? null : piece;
         this.clearPreview();
         this.el.tip.textContent = this.selected
-          ? `${piece.name}: ${piece.effect.describe(piece.value)}. Clique no tabuleiro para encaixar.`
+          ? `${piece.name}: ativa ${piece.effect.describe(piece.value)} ao completar linha/coluna. Clique no tabuleiro para encaixar.`
           : 'Clique numa peça e depois no tabuleiro — ou arraste.';
         this.render();
       };
@@ -988,7 +1025,7 @@ class UI {
         const el = this.cellAt(r, c);
         const v = this.game.board.grid[r][c];
         el.className = 'cell' + (v ? ' filled' : '');
-        el.style.background = v ? EFFECTS[v].css : '';
+        el.style.background = v ? EFFECTS[v.color].css : '';
       }
     }
   }
