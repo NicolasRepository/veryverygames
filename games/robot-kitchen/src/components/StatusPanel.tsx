@@ -1,7 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { GameState, LogEntry } from '../types';
 import { RunStatus } from '../hooks/useGameRunner';
-import { ITEM_ICONS, OVEN_BURN_TICKS, OVEN_READY_TICKS } from '../game/initialState';
+import {
+  FRYER_MAX_OIL,
+  ITEM_ICONS,
+  OVEN_BURN_TICKS,
+  OVEN_READY_TICKS,
+  POT_BURN_TICKS,
+  POT_READY_TICKS,
+  POT_VEGGIES_NEEDED,
+} from '../game/initialState';
 
 interface Props {
   state: GameState;
@@ -108,12 +116,43 @@ export default function StatusPanel({ state, status }: Props) {
         </div>
       </div>
 
-      {(state.oven || state.assembly.slots.length > 0 || state.assembly.ready) && (
+      <div className="shrink-0 rounded-md bg-slate-900 border border-slate-800 p-3 min-w-0 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+        <p className="text-slate-400 break-words">
+          🍽️ Pratos limpos: <span className="text-slate-100 font-semibold">{state.dishes.clean}</span>
+        </p>
+        <p className="text-slate-400 break-words">
+          🧽 Sujos no balcão: <span className={state.dishes.dirtyAtCounter > 0 ? 'text-amber-300 font-semibold' : 'text-slate-100'}>{state.dishes.dirtyAtCounter}</span>
+        </p>
+        <p className="text-slate-400 break-words">
+          🍟 Óleo:{' '}
+          <span className={state.fryer.oilUses === 0 ? 'text-red-400 font-semibold' : 'text-slate-100 font-semibold'}>
+            {state.fryer.oilUses}/{FRYER_MAX_OIL}
+          </span>
+        </p>
+        <p className="text-slate-400 break-words">
+          ❄️ Fila: <span className="text-slate-100 font-semibold">{state.coldPantry.queue.length}</span>
+        </p>
+        <p className="col-span-2 text-[11px] text-teal-300 break-words">
+          {state.coldPantry.queue.length > 0
+            ? state.coldPantry.queue.map((it, i) => `${i}:${it}`).join(' · ')
+            : 'Dispensa Climatizada vazia (aguardando reposição)'}
+        </p>
+      </div>
+
+      {(state.oven || state.pot || state.assembly.slots.length > 0 || state.assembly.ready) && (
         <div className="shrink-0 rounded-md bg-slate-900 border border-slate-800 p-3 min-w-0 flex flex-col gap-2">
           {state.oven && (
             <p className="text-xs text-orange-300 break-words">
               ⏱️ Forno: {state.oven.item.name} · {state.oven.ticksElapsed}/{OVEN_READY_TICKS} ticks para ficar pronto (queima após{' '}
               {OVEN_BURN_TICKS})
+            </p>
+          )}
+          {state.pot && (
+            <p className="text-xs text-sky-300 break-words">
+              🍲 Panela:{' '}
+              {state.pot.cooking
+                ? `cozinhando ${state.pot.ticksCooking}/${POT_READY_TICKS} ticks (queima após ${POT_BURN_TICKS})`
+                : `água ✔ · ${state.pot.veggies}/${POT_VEGGIES_NEEDED} legumes picados · falta cook()`}
             </p>
           )}
           {state.assembly.slots.length > 0 && (

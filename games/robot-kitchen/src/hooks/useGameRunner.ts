@@ -8,15 +8,27 @@ import {
   chopItem,
   cookItem,
   deliverItem,
+  dirtyPlatesQuery,
   distanceToQuery,
   dropItem,
+  fryItem,
   isHoldingQuery,
+  isOpenQuery,
   moveRobot,
+  oilQuery,
   orderItemQuery,
   orderStageQuery,
+  pathCostQuery,
+  peekItemQuery,
+  platesQuery,
+  popItemFromPantry,
+  queueSizeQuery,
   scanCell,
+  takeAtIndex,
   takeItem,
   tickState,
+  triggerDoor,
+  washItem,
 } from '../game/gameEngine';
 import { parseProgram } from '../dsl/parser';
 import { createEnv, InterpreterAPI, RuntimeErrorSignal, runProgram } from '../dsl/interpreter';
@@ -28,57 +40,91 @@ export interface CodeError {
   line: number;
 }
 
-const DEFAULT_CODE = `// Busca, prepara e entrega o que o pedido ativo precisa.
-// A sintaxe (loop, if, repeat...) é em inglês; os nomes de lugares e
-// itens do jogo ("norte", "geladeira", "tomate"...) são em português.
+const DEFAULT_CODE = `// Robot Kitchen — a sintaxe (loop, if, switch, def...) é em inglês;
+// os nomes de lugares e itens ("norte", "geladeira", "tomate") são em português.
 
-// Função reutilizável: vai até a Geladeira e pega um item.
-def ir_para_geladeira() {
-  move("oeste")
-  move("norte")   // esbarra na Geladeira -> agora virado para ela
+// --- Funções COM ARGUMENTOS: encurtam muito o código ---------------------
+def andar(passos, direcao) {
+  repeat(passos) { move(direcao) }
 }
 
-// Guarda o que o pedido precisa numa variável.
-var alvo = orderItem()
-
-if (alvo == "tomate") {
-  ir_para_geladeira()
-  take("tomate")
-  repeat(3) { move("leste") }
-} else {
-  repeat(5) { move("leste") }
-  move("norte")   // esbarra na Despensa -> agora virado para ela
-  take(alvo)
-  repeat(3) { move("oeste") }
+def ir_ao_balcao_de(passos_leste) {
+  andar(passos_leste, "leste")
+  andar(8, "sul")
 }
 
-// Se por acaso pegou o item errado, joga fora na lixeira antes de continuar.
-if (isHolding() == false) {
-  // nada em mãos, nada a fazer aqui
-} else if (orderItem() != alvo) {
-  move("sul")
-  repeat(4) { move("sul") }
-  drop()
+// --- Listas nativas: uma fila de tarefas ---------------------------------
+var tarefas = ["pegar", "preparar", "entregar"]
+var pedido = orderItem()
+
+// --- switch / case: sem encadear vários if / else ------------------------
+switch (pedido) {
+  case "tomate" {
+    move("oeste")
+    move("norte")        // esbarra na Geladeira -> fica virado para ela
+    take("tomate")
+    if (orderStage() == "picada") {
+      andar(3, "leste")
+      move("norte")      // Tábua de Corte
+      chop()
+      ir_ao_balcao_de(6)
+    } else {
+      andar(5, "leste")
+      andar(5, "sul")    // Fogão
+      cook()
+      andar(4, "leste")
+      andar(4, "sul")
+    }
+    deliver()
+  }
+  case "batata" {
+    andar(7, "leste")
+    move("norte")        // Despensa
+    take("batata")
+    andar(3, "oeste")
+    move("norte")        // Processador: 1 tick só, mas -5 de bateria
+    chop()
+    andar(3, "leste")
+    andar(5, "sul")      // Fritadeira
+    fry()
+    move("leste")
+    andar(4, "sul")
+    deliver()
+  }
+  default {
+    andar(7, "leste")
+    move("norte")        // Despensa
+    take(pedido)
+    if (orderStage() == "picada") {
+      andar(5, "oeste")
+      move("norte")      // Tábua de Corte
+      chop()
+      ir_ao_balcao_de(6)
+    } else {
+      andar(3, "oeste")
+      andar(5, "sul")    // Fogão
+      cook()
+      andar(4, "leste")
+      andar(4, "sul")
+    }
+    deliver()
+  }
 }
 
-// Prepara: pica ou cozinha dependendo do que o pedido quer.
-if (orderStage() == "picada") {
-  move("norte")   // esbarra na Tábua de Corte -> agora virado para ela
-  chop()
-  repeat(6) { move("sul") }
-} else {
-  move("leste")
-  repeat(2) { move("sul") }
-  move("sul")      // esbarra no Fogão -> agora virado para ele
-  cook()
-  move("oeste")
-  repeat(4) { move("sul") }
+// --- Louça: todo prato entregue volta sujo ao balcão ---------------------
+if (dirtyPlates() > 0) {
+  take("prato")
+  andar(5, "oeste")
+  move("sul")            // Pia
+  wash()
+  drop()                 // guarda o prato limpo
 }
 
-// Leva até o Balcão e entrega.
-repeat(3) { move("leste") }
-move("leste")      // esbarra no Balcão -> agora virado para ele
-deliver()
+// --- Dicas para os próximos programas ------------------------------------
+// isOpen() / trigger()  -> portas automáticas (y = 7)
+// popItem() / takeAt(i) -> fila da Dispensa Climatizada
+// pathCost("fogao")     -> menor caminho real, para economizar bateria
+// length(tarefas), push(tarefas, "lavar"), pop(tarefas), tarefas[0]
 `;
 
 export function useGameRunner() {
@@ -136,9 +182,21 @@ export function useGameRunner() {
       orderItem: () => dispatch((s) => orderItemQuery(s)),
       orderStage: () => dispatch((s) => orderStageQuery(s)),
       isHolding: () => dispatch((s) => isHoldingQuery(s)),
+      fry: () => dispatch((s) => fryItem(s)),
+      wash: () => dispatch((s) => washItem(s)),
       distanceTo: (station) => dispatch((s) => distanceToQuery(s, station)),
+      pathCost: (station) => dispatch((s) => pathCostQuery(s, station)),
       battery: () => dispatch((s) => batteryQuery(s)),
       charge: () => dispatch((s) => chargeRobot(s)),
+      popItem: () => dispatch((s) => popItemFromPantry(s)),
+      takeAt: (index) => dispatch((s) => takeAtIndex(s, index)),
+      peekItem: (index) => dispatch((s) => peekItemQuery(s, index)),
+      queueSize: () => dispatch((s) => queueSizeQuery(s)),
+      isOpen: () => dispatch((s) => isOpenQuery(s)),
+      trigger: () => dispatch((s) => triggerDoor(s)),
+      plates: () => dispatch((s) => platesQuery(s)),
+      dirtyPlates: () => dispatch((s) => dirtyPlatesQuery(s)),
+      oil: () => dispatch((s) => oilQuery(s)),
     }),
     [dispatch],
   );

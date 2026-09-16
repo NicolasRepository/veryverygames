@@ -14,6 +14,10 @@ const KEYWORDS: Record<string, TokenType> = {
   not: 'NOT',
   var: 'VAR',
   def: 'DEF',
+  switch: 'SWITCH',
+  case: 'CASE',
+  default: 'DEFAULT',
+  return: 'RETURN',
 };
 
 export class LexError extends Error {
@@ -116,8 +120,46 @@ export function tokenize(source: string): Token[] {
         tokens.push({ type: 'RBRACE', value: c, line });
         i++;
         continue;
+      case '[':
+        tokens.push({ type: 'LBRACKET', value: c, line });
+        i++;
+        continue;
+      case ']':
+        tokens.push({ type: 'RBRACKET', value: c, line });
+        i++;
+        continue;
       case ',':
         tokens.push({ type: 'COMMA', value: c, line });
+        i++;
+        continue;
+      case '+':
+        tokens.push({ type: 'PLUS', value: c, line });
+        i++;
+        continue;
+      case '-':
+        tokens.push({ type: 'MINUS', value: c, line });
+        i++;
+        continue;
+      case '<':
+        if (peekNext() === '=') {
+          tokens.push({ type: 'LTE', value: '<=', line });
+          i += 2;
+          continue;
+        }
+        tokens.push({ type: 'LT', value: '<', line });
+        i++;
+        continue;
+      case '>':
+        if (peekNext() === '=') {
+          tokens.push({ type: 'GTE', value: '>=', line });
+          i += 2;
+          continue;
+        }
+        tokens.push({ type: 'GT', value: '>', line });
+        i++;
+        continue;
+      case ':':
+        // ':' opcional depois de 'case "x"'
         i++;
         continue;
       case ';':
