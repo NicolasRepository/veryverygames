@@ -31,10 +31,13 @@
   --purple:#b06bff;
   --gold:#ffd23f;
 
-  --cell:clamp(38px, 6.2vw, 78px);
-  --gap:5px;
+  --cell:clamp(30px, 5vw, 62px);
+  --gap:4px;
 }
 *{box-sizing:border-box}
+html {
+  zoom: 0.8;
+}
 html,body{margin:0;padding:0;height:100%}
 body{
   background:var(--bg);
@@ -50,7 +53,7 @@ h1,h2,h3,.num,button{font-family:'Chakra Petch',sans-serif}
 button{font-size:1rem;color:inherit;cursor:pointer}
 button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 
-.app{max-width:1760px;min-height:100vh;margin:0 auto;padding:20px 28px 32px;display:flex;flex-direction:column}
+.app{max-width:1408px;min-height:100vh;margin:0 auto;padding:16px 22px 26px;display:flex;flex-direction:column}
 
 /* ---------- topo ---------- */
 .topbar{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:20px}
@@ -72,7 +75,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
 .ghost-btn:hover{color:var(--ink);border-color:var(--brass)}
 
 /* ---------- layout ---------- */
-.stage{flex:1;display:grid;grid-template-columns:300px minmax(0,1fr) 300px;gap:26px;align-items:start}
+.stage{flex:1;display:grid;grid-template-columns:240px minmax(0,1fr) 240px;gap:20px;align-items:start}
 @media (max-width:1000px){
   .stage{grid-template-columns:1fr 1fr;gap:14px}
   .board-col{grid-column:1/-1;order:3}
@@ -146,7 +149,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
 .tip{color:var(--muted);font-size:.92rem;max-width:42ch;text-align:center;line-height:1.5}
 
 /* ---------- mão ---------- */
-.hand-wrap{width:100%;max-width:760px}
+.hand-wrap{width:100%;max-width:608px}
 .hand{
   display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
   padding:18px;border-radius:16px;border:1px solid var(--line);background:rgba(0,0,0,.2);
@@ -154,14 +157,14 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
 }
 .hand:empty::after{content:"Mão vazia — passe o turno para comprar.";color:var(--muted);font-size:.95rem}
 .piece{
-  display:grid;gap:4px;padding:13px;border-radius:14px;cursor:grab;
+  display:grid;gap:3px;padding:10px;border-radius:14px;cursor:grab;
   background:rgba(255,255,255,.035);border:1px solid var(--line);
   transition:transform .12s ease,border-color .12s ease,background .12s ease;
 }
 .piece:hover{transform:translateY(-3px);background:rgba(255,255,255,.07)}
 .piece.selected{border-color:var(--brass);background:rgba(230,178,92,.12);transform:translateY(-4px)}
 .piece.unplayable{opacity:.4}
-.piece .blk{width:20px;height:20px;border-radius:5px}
+.piece .blk{width:16px;height:16px;border-radius:4px}
 .piece .blk.off{background:transparent}
 .drag-ghost{
   position:fixed;z-index:60;pointer-events:none;opacity:.85;
@@ -183,18 +186,18 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);out
 .overlay[hidden]{display:none}
 .modal{
   background:var(--panel);border:1px solid var(--line);border-radius:22px;
-  padding:34px;max-width:700px;width:100%;text-align:center;
+  padding:34px;max-width:560px;width:100%;text-align:center;
 }
 .modal h2{margin:0 0 8px;font-size:1.85rem}
 .modal p{color:var(--muted);margin:0 0 24px;line-height:1.6;font-size:1rem}
 .rewards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
 .reward{
   background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;
-  padding:18px;width:180px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;
+  padding:18px;width:144px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;
 }
 .reward:hover{transform:translateY(-4px);border-color:var(--brass)}
 .reward .mini{display:grid;gap:3px;justify-content:center;margin-bottom:12px;min-height:40px;align-content:center}
-.reward .mini .blk{width:13px;height:13px;border-radius:4px}
+.reward .mini .blk{width:10px;height:10px;border-radius:3px}
 .reward .mini .blk.off{background:transparent}
 .reward .name{font-family:'Chakra Petch',sans-serif;font-weight:600;margin-bottom:4px}
 .reward .desc{font-size:.78rem;color:var(--muted);line-height:1.4}
