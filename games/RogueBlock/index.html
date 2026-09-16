@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RogueBlock</title>
+<meta name="description" content="Deckbuilder roguelike de posicionamento: encaixe peças no tabuleiro para atacar, curar, bloquear e envenenar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RogueBlock — estilo
+   Paleta: fundo índigo profundo + latão como cor estrutural.
+   As cores das peças são as únicas saturadas na tela, para que
+   o tabuleiro seja sempre a coisa mais legível do jogo.
+   ============================================================ */
+:root{
+  --bg:#080b18;
+  --bg-2:#0e1428;
+  --panel:#121a33;
+  --line:rgba(255,255,255,.09);
+  --ink:#eef1fb;
+  --muted:#8d96b8;
+  --brass:#e6b25c;
+
+  /* Cores dos efeitos — ao criar um efeito novo, adicione a var aqui */
+  --red:#ff4d5e;
+  --green:#3ddc91;
+  --blue:#44a8ff;
+  --purple:#b06bff;
+  --gold:#ffd23f;
+
+  --cell:clamp(30px, 8.6vw, 52px);
+  --gap:4px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg);
+  background-image:
+    radial-gradient(circle at 12% 0%, rgba(176,107,255,.14), transparent 45%),
+    radial-gradient(circle at 88% 8%, rgba(68,168,255,.12), transparent 45%);
+  color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  touch-action:manipulation;
+}
+h1,h2,h3,.num,button{font-family:'Chakra Petch',sans-serif}
+button{font-size:1rem;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+.app{max-width:1180px;margin:0 auto;padding:18px 16px 40px}
+
+/* ---------- topo ---------- */
+.topbar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.topbar h1{
+  margin:0;font-size:1.6rem;letter-spacing:.02em;
+  background:linear-gradient(90deg,var(--red),var(--purple) 55%,var(--blue));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.stage-tag{
+  font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:.85rem;
+  color:var(--brass);border:1px solid rgba(230,178,92,.4);
+  background:rgba(230,178,92,.09);padding:4px 12px;border-radius:999px;
+}
+.topbar .spacer{flex:1}
+.ghost-btn{
+  background:transparent;border:1px solid var(--line);border-radius:9px;
+  padding:7px 14px;font-size:.85rem;font-weight:600;color:var(--muted);
+}
+.ghost-btn:hover{color:var(--ink);border-color:var(--brass)}
+
+/* ---------- layout ---------- */
+.stage{display:grid;grid-template-columns:230px minmax(0,1fr) 230px;gap:18px;align-items:start}
+@media (max-width:900px){
+  .stage{grid-template-columns:1fr 1fr;gap:12px}
+  .board-col{grid-column:1/-1;order:3}
+}
+
+.panel{
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:16px;padding:16px;
+}
+.panel h2{margin:0 0 4px;font-size:1.05rem}
+.panel .sub{color:var(--muted);font-size:.82rem;margin:0 0 14px;line-height:1.4}
+
+.bar{height:14px;border-radius:999px;background:rgba(0,0,0,.4);overflow:hidden;border:1px solid var(--line)}
+.bar > i{display:block;height:100%;transition:width .3s ease}
+.hp-fill{background:linear-gradient(90deg,#ff6b6b,var(--red))}
+.enemy-fill{background:linear-gradient(90deg,#ff9a3c,var(--red))}
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 5px;font-size:.8rem;color:var(--muted)}
+.stat-row .num{font-size:1.05rem;color:var(--ink);font-weight:600}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;min-height:30px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;
+  padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.25);
+}
+.chip.block{color:var(--blue);border-color:rgba(68,168,255,.45)}
+.chip.poison{color:var(--purple);border-color:rgba(176,107,255,.45)}
+.chip.power{color:var(--brass);border-color:rgba(230,178,92,.45)}
+.chip.pop{animation:pop .3s ease}
+@keyframes pop{from{transform:scale(1.35)}to{transform:scale(1)}}
+
+.enemy-face{font-size:2.6rem;line-height:1;margin-bottom:8px;display:block}
+.intent{
+  margin-top:14px;padding:12px;border-radius:12px;
+  border:1px dashed rgba(255,255,255,.18);background:rgba(0,0,0,.25);
+}
+.intent .label{font-size:.72rem;color:var(--muted);margin-bottom:5px}
+.intent .value{display:flex;align-items:center;gap:8px;font-family:'Chakra Petch',sans-serif;font-weight:600}
+.intent .value b{font-size:1.25rem}
+.intent .hint{font-size:.76rem;color:var(--muted);margin-top:6px;line-height:1.4}
+
+/* ---------- tabuleiro ---------- */
+.board-col{display:flex;flex-direction:column;align-items:center;gap:14px}
+#board{
+  display:grid;gap:var(--gap);padding:var(--gap);
+  background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;
+  touch-action:none;
+}
+.cell{
+  width:var(--cell);height:var(--cell);border-radius:7px;
+  background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+  transition:background .12s ease, box-shadow .12s ease;
+}
+.cell.filled{box-shadow:inset 0 -3px 0 rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.14)}
+.cell.preview-ok{background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)}
+.cell.preview-bad{background:rgba(255,77,94,.22);box-shadow:inset 0 0 0 2px rgba(255,77,94,.6)}
+.cell.clearing{animation:flash .32s ease}
+@keyframes flash{
+  0%{transform:scale(1);filter:brightness(1)}
+  45%{transform:scale(1.14);filter:brightness(2.4)}
+  100%{transform:scale(.6);filter:brightness(1);opacity:.2}
+}
+
+.turn-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+.end-turn{
+  border:none;border-radius:11px;padding:12px 26px;font-weight:700;font-size:1rem;
+  color:#0a0d1a;background:linear-gradient(180deg,#ffd98a,var(--brass));
+  box-shadow:0 4px 0 rgba(0,0,0,.35);
+}
+.end-turn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.end-turn:disabled{opacity:.45;cursor:not-allowed}
+.tip{color:var(--muted);font-size:.82rem;max-width:34ch;text-align:center;line-height:1.45}
+
+/* ---------- mão ---------- */
+.hand-wrap{width:100%}
+.hand{
+  display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
+  padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.2);
+  min-height:96px;align-items:center;
+}
+.hand:empty::after{content:"Mão vazia — passe o turno para comprar.";color:var(--muted);font-size:.85rem}
+.piece{
+  display:grid;gap:3px;padding:10px;border-radius:12px;cursor:grab;
+  background:rgba(255,255,255,.035);border:1px solid var(--line);
+  transition:transform .12s ease,border-color .12s ease,background .12s ease;
+}
+.piece:hover{transform:translateY(-3px);background:rgba(255,255,255,.07)}
+.piece.selected{border-color:var(--brass);background:rgba(230,178,92,.12);transform:translateY(-4px)}
+.piece.unplayable{opacity:.4}
+.piece .blk{width:15px;height:15px;border-radius:4px}
+.piece .blk.off{background:transparent}
+.drag-ghost{
+  position:fixed;z-index:60;pointer-events:none;opacity:.85;
+  display:grid;gap:var(--gap);transform:translate(-50%,-50%);
+}
+.drag-ghost .blk{width:var(--cell);height:var(--cell);border-radius:7px}
+.drag-ghost .blk.off{background:transparent}
+
+/* ---------- log ---------- */
+.log{margin-top:16px;max-height:170px;overflow:auto;font-size:.82rem;line-height:1.55;color:var(--muted)}
+.log p{margin:0 0 5px}
+.log b{color:var(--ink);font-weight:600}
+
+/* ---------- modal ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(4,6,14,.86);backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;
+}
+.overlay[hidden]{display:none}
+.modal{
+  background:var(--panel);border:1px solid var(--line);border-radius:20px;
+  padding:28px;max-width:620px;width:100%;text-align:center;
+}
+.modal h2{margin:0 0 8px;font-size:1.6rem}
+.modal p{color:var(--muted);margin:0 0 22px;line-height:1.6}
+.rewards{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.reward{
+  background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;
+  padding:16px;width:160px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;
+}
+.reward:hover{transform:translateY(-4px);border-color:var(--brass)}
+.reward .mini{display:grid;gap:3px;justify-content:center;margin-bottom:12px;min-height:40px;align-content:center}
+.reward .mini .blk{width:13px;height:13px;border-radius:4px}
+.reward .mini .blk.off{background:transparent}
+.reward .name{font-family:'Chakra Petch',sans-serif;font-weight:600;margin-bottom:4px}
+.reward .desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <h1>RogueBlock</h1>
+    <span class="stage-tag" id="stageTag">Fase 1</span>
+    <span class="spacer"></span>
+    <button class="ghost-btn" id="rotateBtn" title="Atalho: R">Girar peça (R)</button>
+    <button class="ghost-btn" id="restartBtn">Recomeçar</button>
+  </div>
+
+  <div class="stage">
+    <!-- jogador -->
+    <section class="panel" aria-label="Jogador">
+      <h2>Você</h2>
+      <p class="sub">Encaixe peças para agir. O escudo some no início do seu turno.</p>
+      <div class="stat-row"><span>Vida</span><span class="num"><span id="pHp">60</span>/<span id="pMaxHp">60</span></span></div>
+      <div class="bar"><i class="hp-fill" id="pHpBar" style="width:100%"></i></div>
+      <div class="chips" id="pChips"></div>
+      <div class="stat-row"><span>Deck</span><span class="num" id="deckCount">0</span></div>
+      <div class="stat-row"><span>Descarte</span><span class="num" id="discardCount">0</span></div>
+      <div class="log" id="log" aria-live="polite"></div>
+    </section>
+
+    <!-- tabuleiro -->
+    <div class="board-col">
+      <div id="board" role="grid" aria-label="Tabuleiro"></div>
+      <div class="turn-bar">
+        <button class="end-turn" id="endTurnBtn">Passar o turno</button>
+      </div>
+      <p class="tip" id="tip">Clique numa peça e depois no tabuleiro — ou arraste. Completar uma linha ou coluna limpa o espaço e causa dano.</p>
+      <div class="hand-wrap"><div class="hand" id="hand"></div></div>
+    </div>
+
+    <!-- inimigo -->
+    <section class="panel" aria-label="Inimigo">
+      <span class="enemy-face" id="eFace">👹</span>
+      <h2 id="eName">Inimigo</h2>
+      <p class="sub" id="eTitle"></p>
+      <div class="stat-row"><span>Vida</span><span class="num"><span id="eHp">0</span>/<span id="eMaxHp">0</span></span></div>
+      <div class="bar"><i class="enemy-fill" id="eHpBar" style="width:100%"></i></div>
+      <div class="chips" id="eChips"></div>
+      <div class="intent">
+        <div class="label">Próxima ação</div>
+        <div class="value" id="intentValue">—</div>
+        <div class="hint" id="intentHint"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   RogueBlock — deckbuilder roguelike com posicionamento de peças
+   100% client-side. Sem build, sem dependências, sem backend.
+
+   Organização do arquivo:
+     1. CONFIG        — todos os números ajustáveis do balanceamento
+     2. EFFECTS       — catálogo de cores/efeitos (extensível, ver comentário)
+     3. SHAPES        — catálogo de formatos (poliominós)
+     4. Piece / Deck / Board / Player / Enemy — modelo de dados
+     5. EnemyFactory  — geração procedural dos inimigos (ver comentário)
+     6. Game          — máquina de estados do combate
+     7. UI            — renderização em DOM + input (clique e arrastar)
+   ========================================================================== */
+
+/* ------------------------------ 1. CONFIG ------------------------------ */
+const CONFIG = {
+  BOARD_SIZE: 8,
+  HAND_SIZE: 5,
+  MAX_HAND: 7,            // teto da mão ao comprar peças de bônus
+  PLAYER_MAX_HP: 60,
+
+  // Bônus por limpar linha/coluna cheia
+  LINE_CLEAR_DAMAGE: 4,   // dano por linha limpa
+  LINE_CLEAR_DRAW: 1,     // peças compradas por linha limpa
+  COMBO_BONUS: 0.5,       // +50% de dano por linha extra limpa no mesmo encaixe
+
+  // Geração procedural (detalhes em EnemyFactory)
+  ENEMY_BASE_HP: 32,
+  ENEMY_HP_GROWTH: 0.38,  // crescimento por fase (composto com ruído)
+  ENEMY_BASE_DMG: 6,
+  ENEMY_DMG_GROWTH: 1.6,  // dano extra por fase
+  ELITE_EVERY: 5,         // a cada N fases aparece um elite
+  ELITE_MULT: 1.55,
+};
+
+/* ------------------------------ 2. EFFECTS ------------------------------
+   Cada cor é um efeito. O valor do efeito escala com o número de blocos da
+   peça: valor = blocos * perBlock * peça.power.
+
+   >>> COMO ADICIONAR UMA COR/EFEITO NOVO <<<
+   1. Crie uma entrada aqui com uma chave única (ex.: "orange").
+   2. Preencha: label, css (uma cor CSS ou variável), icon, perBlock,
+      describe(valor) e apply(game, valor).
+   3. Adicione a variável de cor no bloco :root do CSS, se usar var().
+   4. Pronto: a cor já entra no sorteio de recompensas automaticamente
+      (ver REWARD_COLOR_POOL abaixo, que lê as chaves deste objeto).
+   Exemplo de efeito novo — "queimadura":
+     burn: { label:'Queimadura', css:'var(--orange)', icon:'🔥', perBlock:1,
+             describe:v => `${v} de queimadura`,
+             apply:(g,v) => { g.enemy.burn += v; } }
+   ------------------------------------------------------------------------ */
+const EFFECTS = {
+  red: {
+    label: 'Ataque', css: 'var(--red)', icon: '⚔️', perBlock: 1,
+    describe: v => `${v} de dano`,
+    apply: (g, v) => g.dealDamageToEnemy(v, 'peça vermelha'),
+  },
+  green: {
+    label: 'Cura', css: 'var(--green)', icon: '💚', perBlock: 1,
+    describe: v => `${v} de cura`,
+    apply: (g, v) => { g.player.heal(v); g.log(`Você recupera <b>${v}</b> de vida.`); },
+  },
+  blue: {
+    label: 'Escudo', css: 'var(--blue)', icon: '🛡️', perBlock: 2,
+    describe: v => `${v} de escudo`,
+    apply: (g, v) => { g.player.block += v; g.log(`Você ganha <b>${v}</b> de escudo.`); },
+  },
+  purple: {
+    label: 'Veneno', css: 'var(--purple)', icon: '☠️', perBlock: 1,
+    describe: v => `${v} de veneno`,
+    apply: (g, v) => { g.enemy.poison += v; g.log(`O inimigo recebe <b>${v}</b> de veneno.`); },
+  },
+};
+
+/* ------------------------------ 3. SHAPES ------------------------------
+   Formatos em coordenadas [linha, coluna] com origem no canto superior
+   esquerdo. "tier" controla a raridade no draft de recompensas:
+   quanto maior a fase, maior a chance de sair um tier alto.
+   Para criar um formato novo, basta acrescentar uma entrada aqui.
+   ------------------------------------------------------------------------ */
+const SHAPES = {
+  dot:    { name:'Ponto',    tier:0, cells:[[0,0]] },
+  duo:    { name:'Dupla',    tier:0, cells:[[0,0],[0,1]] },
+  corner: { name:'Canto',    tier:1, cells:[[0,0],[1,0],[1,1]] },
+  tri:    { name:'Trio',     tier:1, cells:[[0,0],[0,1],[0,2]] },
+  square: { name:'Quadrado', tier:2, cells:[[0,0],[0,1],[1,0],[1,1]] },
+  el:     { name:'L',        tier:2, cells:[[0,0],[1,0],[2,0],[2,1]] },
+  jay:    { name:'J',        tier:2, cells:[[0,1],[1,1],[2,1],[2,0]] },
+  tee:    { name:'T',        tier:2, cells:[[0,0],[0,1],[0,2],[1,1]] },
+  ess:    { name:'S',        tier:2, cells:[[0,1],[0,2],[1,0],[1,1]] },
+  line4:  { name:'Barra',    tier:2, cells:[[0,0],[0,1],[0,2],[0,3]] },
+  plus:   { name:'Cruz',     tier:3, cells:[[0,1],[1,0],[1,1],[1,2],[2,1]] },
+  line5:  { name:'Viga',     tier:3, cells:[[0,0],[0,1],[0,2],[0,3],[0,4]] },
+  big:    { name:'Bloco',    tier:4, cells:[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]] },
+};
+
+// Deck inicial: variedade suficiente para ensinar as 4 cores.
+const STARTING_DECK = [
+  ['duo','red'], ['tri','red'], ['corner','red'], ['square','red'],
+  ['duo','blue'], ['tri','blue'], ['corner','blue'],
+  ['duo','green'], ['tri','green'],
+  ['duo','purple'],
+];
+
+const REWARD_COLOR_POOL = Object.keys(EFFECTS); // pega cores novas sozinho
+
+/* --------------------------- utilidades --------------------------- */
+const rnd = n => Math.floor(Math.random() * n);
+const pick = arr => arr[rnd(arr.length)];
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+/* ------------------------------ 4. MODELO ------------------------------ */
+
+class Piece {
+  constructor(shapeKey, colorKey, power = 1) {
+    this.id = 'p' + Math.random().toString(36).slice(2, 9);
+    this.shapeKey = shapeKey;
+    this.colorKey = colorKey;
+    this.power = power;                                  // multiplicador do efeito
+    this.cells = SHAPES[shapeKey].cells.map(c => [...c]); // cópia rotacionável
+  }
+  get size() { return this.cells.length; }
+  get effect() { return EFFECTS[this.colorKey]; }
+  get value() { return Math.round(this.size * this.effect.perBlock * this.power); }
+  get name() {
+    const base = `${SHAPES[this.shapeKey].name} ${this.effect.label}`;
+    return this.power > 1 ? base + ' reforçado' : base;
+  }
+  get height() { return Math.max(...this.cells.map(c => c[0])) + 1; }
+  get width()  { return Math.max(...this.cells.map(c => c[1])) + 1; }
+
+  rotate() { // 90° horário, depois normaliza para a origem
+    const h = this.height;
+    this.cells = this.cells.map(([r, c]) => [c, h - 1 - r]);
+    const minR = Math.min(...this.cells.map(c => c[0]));
+    const minC = Math.min(...this.cells.map(c => c[1]));
+    this.cells = this.cells.map(([r, c]) => [r - minR, c - minC]);
+  }
+  clone() {
+    const p = new Piece(this.shapeKey, this.colorKey, this.power);
+    p.cells = this.cells.map(c => [...c]);
+    return p;
+  }
+}
+
+class Deck {
+  constructor(entries) {
+    this.cards = entries.map(([s, c]) => new Piece(s, c));
+    this.drawPile = [];
+    this.discard = [];
+    this.reset();
+  }
+  reset() {
+    this.drawPile = this.cards.map(p => p.clone());
+    this.discard = [];
+    this.shuffle();
+  }
+  shuffle() {
+    for (let i = this.drawPile.length - 1; i > 0; i--) {
+      const j = rnd(i + 1);
+      [this.drawPile[i], this.drawPile[j]] = [this.drawPile[j], this.drawPile[i]];
+    }
+  }
+  draw(n) {
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      if (!this.drawPile.length) {           // deck vazio: embaralha o descarte
+        if (!this.discard.length) break;
+        this.drawPile = this.discard;
+        this.discard = [];
+        this.shuffle();
+      }
+      out.push(this.drawPile.pop());
+    }
+    return out;
+  }
+  add(piece) { this.cards.push(piece); }
+}
+
+class Board {
+  constructor(size) { this.size = size; this.reset(); }
+  reset() {
+    this.grid = Array.from({ length: this.size }, () => Array(this.size).fill(null));
+  }
+  // Coordenadas absolutas de uma peça ancorada em (row, col)
+  cellsAt(piece, row, col) { return piece.cells.map(([r, c]) => [row + r, col + c]); }
+
+  canPlace(piece, row, col) {
+    return this.cellsAt(piece, row, col).every(([r, c]) =>
+      r >= 0 && c >= 0 && r < this.size && c < this.size && !this.grid[r][c]);
+  }
+  place(piece, row, col) {
+    this.cellsAt(piece, row, col).forEach(([r, c]) => { this.grid[r][c] = piece.colorKey; });
+  }
+  // Existe algum encaixe válido para esta peça, em qualquer rotação?
+  hasRoomFor(piece) {
+    const test = piece.clone();
+    for (let rot = 0; rot < 4; rot++) {
+      for (let r = 0; r < this.size; r++)
+        for (let c = 0; c < this.size; c++)
+          if (this.canPlace(test, r, c)) return true;
+      test.rotate();
+    }
+    return false;
+  }
+  // Retorna as células das linhas/colunas cheias (sem apagar ainda)
+  findFullLines() {
+    const cells = [];
+    let count = 0;
+    for (let r = 0; r < this.size; r++)
+      if (this.grid[r].every(Boolean)) { count++; for (let c = 0; c < this.size; c++) cells.push([r, c]); }
+    for (let c = 0; c < this.size; c++)
+      if (this.grid.every(row => row[c])) { count++; for (let r = 0; r < this.size; r++) cells.push([r, c]); }
+    return { count, cells };
+  }
+  clearCells(cells) { cells.forEach(([r, c]) => { this.grid[r][c] = null; }); }
+}
+
+class Player {
+  constructor(maxHp) { this.maxHp = maxHp; this.hp = maxHp; this.block = 0; }
+  heal(v) { this.hp = clamp(this.hp + v, 0, this.maxHp); }
+  takeDamage(raw) {
+    const absorbed = Math.min(this.block, raw);
+    this.block -= absorbed;
+    this.hp = clamp(this.hp - (raw - absorbed), 0, this.maxHp);
+    return { absorbed, taken: raw - absorbed };
+  }
+  get dead() { return this.hp <= 0; }
+}
+
+class Enemy {
+  constructor(data) {
+    Object.assign(this, data);       // name, face, title, maxHp, damage, traits
+    this.hp = this.maxHp;
+    this.block = 0;
+    this.poison = 0;
+    this.strength = 0;               // buff acumulado de dano
+    this.intent = null;
+  }
+  takeDamage(raw) {
+    const absorbed = Math.min(this.block, raw);
+    this.block -= absorbed;
+    this.hp = clamp(this.hp - (raw - absorbed), 0, this.maxHp);
+    return { absorbed, taken: raw - absorbed };
+  }
+  get dead() { return this.hp <= 0; }
+  get attackValue() { return this.damage + this.strength; }
+
+  /* Sorteia a intenção do próximo turno. Pesos: ataca na maior parte das
+     vezes, para o jogador conseguir planejar; abaixo de 40% de vida fica
+     mais agressivo. Elites têm acesso ao ataque pesado. */
+  rollIntent() {
+    const pool = [
+      { type: 'attack', w: 5 },
+      { type: 'buff',   w: this.traits.canBuff ? 2 : 0 },
+      { type: 'defend', w: this.traits.canDefend ? 2 : 0 },
+      { type: 'heavy',  w: this.traits.isElite ? 2 : 1 },
+    ].filter(o => o.w > 0);
+
+    if (this.hp / this.maxHp < 0.4) pool.push({ type: 'attack', w: 3 });
+
+    let roll = Math.random() * pool.reduce((s, o) => s + o.w, 0);
+    let type = pool[0].type;
+    for (const o of pool) { roll -= o.w; if (roll <= 0) { type = o.type; break; } }
+
+    if (type === 'attack') this.intent = { type, value: this.attackValue, icon: '⚔️', label: 'Ataque' };
+    if (type === 'heavy')  this.intent = { type, value: Math.round(this.attackValue * 1.8), icon: '💥', label: 'Golpe pesado' };
+    if (type === 'buff')   this.intent = { type, value: 2 + Math.floor(this.tier / 2), icon: '💪', label: 'Fortalecer' };
+    if (type === 'defend') this.intent = { type, value: Math.round(this.maxHp * 0.12), icon: '🛡️', label: 'Defender' };
+  }
+}
+
+/* -------------------- 5. GERAÇÃO PROCEDURAL DE INIMIGOS -------------------
+   Regras (todas ajustáveis em CONFIG):
+
+   • Vida    = ENEMY_BASE_HP * (1 + ENEMY_HP_GROWTH)^(fase-1) * ruído(0.9–1.15)
+     Crescimento composto: o inimigo da fase 5 tem ~3,6x a vida do primeiro.
+   • Dano    = ENEMY_BASE_DMG + ENEMY_DMG_GROWTH * (fase-1), arredondado,
+     com ruído de ±1 para as fases não ficarem idênticas.
+   • Elite   = toda fase múltipla de ELITE_EVERY. Ganha ELITE_MULT de vida,
+     +25% de dano e acesso garantido ao "golpe pesado".
+   • Traços  = sorteados a partir da fase 2 (defender/fortalecer). São o que
+     dá personalidade ao inimigo e mudam o leque de intenções.
+   • Nome    = prefixo + arquétipo sorteados de listas fixas; o arquétipo
+     também decide o emoji, então o visual combina com o nome.
+
+   Para adicionar inimigos novos: acrescente entradas em ARCHETYPES
+   (e, se quiser, novos traços tratados em Enemy.rollIntent).
+   -------------------------------------------------------------------------- */
+const ARCHETYPES = [
+  { name:'Golem',    face:'🗿', title:'Pedra que não cede',       bias:{ hp: 1.25, dmg: 0.85, defend: true } },
+  { name:'Gárgula',  face:'👹', title:'Guardiã de telhados',      bias:{ hp: 1.0,  dmg: 1.0,  defend: true } },
+  { name:'Aranha',   face:'🕷️', title:'Rápida e insistente',      bias:{ hp: 0.8,  dmg: 1.2,  buff: true  } },
+  { name:'Feiticeiro',face:'🧙', title:'Ergue o próprio poder',   bias:{ hp: 0.9,  dmg: 1.05, buff: true  } },
+  { name:'Serpente', face:'🐍', title:'Ataca no vão da guarda',   bias:{ hp: 0.95, dmg: 1.15, buff: true  } },
+  { name:'Ceifador', face:'💀', title:'Cobra o que é devido',     bias:{ hp: 1.1,  dmg: 1.1,  defend: true } },
+  { name:'Cogumelo', face:'🍄', title:'Cresce enquanto apanha',   bias:{ hp: 1.15, dmg: 0.9,  buff: true  } },
+];
+const PREFIXES = ['Velho', 'Faminto', 'Rachado', 'Sombrio', 'Espinhoso', 'Oco', 'Errante'];
+
+const EnemyFactory = {
+  create(stage) {
+    const arch = pick(ARCHETYPES);
+    const isElite = stage % CONFIG.ELITE_EVERY === 0;
+
+    const hpNoise = 0.9 + Math.random() * 0.25;
+    let maxHp = CONFIG.ENEMY_BASE_HP
+      * Math.pow(1 + CONFIG.ENEMY_HP_GROWTH, stage - 1)
+      * arch.bias.hp * hpNoise;
+
+    let damage = CONFIG.ENEMY_BASE_DMG
+      + CONFIG.ENEMY_DMG_GROWTH * (stage - 1);
+    damage = damage * arch.bias.dmg + (Math.random() * 2 - 1);
+
+    if (isElite) { maxHp *= CONFIG.ELITE_MULT; damage *= 1.25; }
+
+    return new Enemy({
+      name: (isElite ? 'Elite: ' : '') + pick(PREFIXES) + ' ' + arch.name,
+      face: arch.face,
+      title: arch.title,
+      tier: stage,
+      maxHp: Math.round(maxHp),
+      damage: Math.max(3, Math.round(damage)),
+      traits: {
+        isElite,
+        canDefend: stage >= 2 && !!arch.bias.defend,
+        canBuff:   stage >= 2 && !!arch.bias.buff,
+      },
+    });
+  },
+};
+
+/* Sorteio de recompensas: quanto maior a fase, maior o tier permitido.
+   Fase 1-2 → até tier 2; cada 2 fases libera o próximo tier. */
+function rollReward(stage) {
+  const maxTier = clamp(1 + Math.floor(stage / 2), 1, 4);
+  const pool = Object.keys(SHAPES).filter(k => SHAPES[k].tier <= maxTier && SHAPES[k].tier > 0);
+  const shapeKey = pick(pool);
+  const colorKey = pick(REWARD_COLOR_POOL);
+  // 1 em 6 vem reforçada (efeito dobrado) a partir da fase 3
+  const power = (stage >= 3 && rnd(6) === 0) ? 2 : 1;
+  return new Piece(shapeKey, colorKey, power);
+}
+
+/* ------------------------------ 6. GAME ------------------------------ */
+class Game {
+  constructor(ui) {
+    this.ui = ui;
+    ui.game = this;          // o primeiro render acontece dentro de newRun()
+    this.newRun();
+  }
+  newRun() {
+    this.stage = 1;
+    this.player = new Player(CONFIG.PLAYER_MAX_HP);
+    this.deck = new Deck(STARTING_DECK);
+    this.board = new Board(CONFIG.BOARD_SIZE);
+    this.hand = [];
+    this.logs = [];
+    this.state = 'playing';
+    this.startEncounter();
+  }
+  startEncounter() {
+    this.enemy = EnemyFactory.create(this.stage);
+    this.board.reset();
+    this.deck.reset();
+    this.hand = [];
+    this.player.block = 0;
+    this.log(`<b>Fase ${this.stage}</b> — ${this.enemy.name} aparece.`);
+    this.startPlayerTurn();
+  }
+  startPlayerTurn() {
+    this.state = 'playing';
+    this.player.block = 0;                       // escudo não acumula entre turnos
+    this.discardHand();
+    this.hand = this.deck.draw(CONFIG.HAND_SIZE);
+    this.enemy.rollIntent();
+    this.ui.render();
+  }
+  discardHand() {
+    this.deck.discard.push(...this.hand);
+    this.hand = [];
+  }
+  log(html) {
+    this.logs.unshift(html);
+    if (this.logs.length > 40) this.logs.pop();
+  }
+
+  dealDamageToEnemy(v, source) {
+    const { absorbed, taken } = this.enemy.takeDamage(v);
+    this.log(`Você causa <b>${taken}</b> de dano${absorbed ? ` (${absorbed} bloqueado)` : ''}.`);
+    this.checkEnemyDeath();
+  }
+
+  /* Joga uma peça da mão no tabuleiro. Retorna true se encaixou. */
+  playPiece(piece, row, col) {
+    if (this.state !== 'playing') return false;
+    if (!this.board.canPlace(piece, row, col)) return false;
+
+    this.board.place(piece, row, col);
+    this.hand = this.hand.filter(p => p.id !== piece.id);
+    this.deck.discard.push(piece);
+
+    // 1) efeito da própria peça (escala com a quantidade de blocos)
+    piece.effect.apply(this, piece.value);
+    if (this.state !== 'playing') return true;   // inimigo caiu com o efeito da peça
+
+    // 2) bônus de linhas/colunas completas
+    const { count, cells } = this.board.findFullLines();
+    if (count > 0) {
+      this.ui.flashCells(cells);
+      this.board.clearCells(cells);
+      const mult = 1 + (count - 1) * CONFIG.COMBO_BONUS;
+      const dmg = Math.round(CONFIG.LINE_CLEAR_DAMAGE * count * mult);
+      this.log(`<b>${count} linha${count > 1 ? 's' : ''} limpa${count > 1 ? 's' : ''}!</b> +${dmg} de dano.`);
+      this.dealDamageToEnemy(dmg, 'linha');
+      const room = CONFIG.MAX_HAND - this.hand.length;
+      const drawn = this.deck.draw(Math.min(room, CONFIG.LINE_CLEAR_DRAW * count));
+      this.hand.push(...drawn);
+    }
+
+    if (this.state === 'playing') this.ui.render();
+    return true;
+  }
+
+  checkEnemyDeath() {
+    if (this.enemy.dead && this.state === 'playing') {
+      this.state = 'reward';
+      this.log(`<b>${this.enemy.name} foi derrotado.</b>`);
+      this.ui.showRewards([rollReward(this.stage + 1), rollReward(this.stage + 1), rollReward(this.stage + 1)]);
+    }
+  }
+
+  endTurn() {
+    if (this.state !== 'playing') return;
+
+    // veneno age no fim do seu turno e perde 1 de intensidade
+    if (this.enemy.poison > 0) {
+      const p = this.enemy.poison;
+      this.enemy.hp = clamp(this.enemy.hp - p, 0, this.enemy.maxHp);
+      this.enemy.poison = Math.max(0, p - 1);
+      this.log(`Veneno causa <b>${p}</b> de dano.`);
+      this.checkEnemyDeath();
+      if (this.state !== 'playing') return;
+    }
+
+    this.enemyTurn();
+    if (this.state !== 'playing') return;
+    this.startPlayerTurn();
+  }
+
+  enemyTurn() {
+    this.enemy.block = 0;
+    const it = this.enemy.intent;
+    if (!it) return;
+
+    if (it.type === 'attack' || it.type === 'heavy') {
+      const { absorbed, taken } = this.player.takeDamage(it.value);
+      this.log(`${this.enemy.name} ataca: <b>${taken}</b> de dano${absorbed ? ` (${absorbed} no escudo)` : ''}.`);
+    } else if (it.type === 'buff') {
+      this.enemy.strength += it.value;
+      this.log(`${this.enemy.name} fica mais forte (+${it.value} de dano).`);
+    } else if (it.type === 'defend') {
+      this.enemy.block += it.value;
+      this.log(`${this.enemy.name} se protege (+${it.value} de escudo).`);
+    }
+
+    if (this.player.dead) {
+      this.state = 'over';
+      this.ui.showGameOver();
+    }
+  }
+
+  takeReward(piece) {
+    if (piece) {
+      this.deck.add(piece);
+      this.log(`Nova peça no deck: <b>${piece.name}</b>.`);
+    }
+    this.stage++;
+    this.startEncounter();
+  }
+}
+
+/* ------------------------------ 7. UI ------------------------------ */
+class UI {
+  constructor() {
+    this.el = {
+      board: document.getElementById('board'),
+      hand: document.getElementById('hand'),
+      log: document.getElementById('log'),
+      overlay: document.getElementById('overlay'),
+      modal: document.getElementById('modal'),
+      tip: document.getElementById('tip'),
+      stageTag: document.getElementById('stageTag'),
+      pHp: document.getElementById('pHp'), pMaxHp: document.getElementById('pMaxHp'),
+      pHpBar: document.getElementById('pHpBar'), pChips: document.getElementById('pChips'),
+      deckCount: document.getElementById('deckCount'), discardCount: document.getElementById('discardCount'),
+      eHp: document.getElementById('eHp'), eMaxHp: document.getElementById('eMaxHp'),
+      eHpBar: document.getElementById('eHpBar'), eChips: document.getElementById('eChips'),
+      eName: document.getElementById('eName'), eFace: document.getElementById('eFace'),
+      eTitle: document.getElementById('eTitle'),
+      intentValue: document.getElementById('intentValue'), intentHint: document.getElementById('intentHint'),
+      endTurnBtn: document.getElementById('endTurnBtn'),
+      rotateBtn: document.getElementById('rotateBtn'),
+      restartBtn: document.getElementById('restartBtn'),
+    };
+    this.selected = null;    // peça selecionada na mão
+    this.flashing = new Set(); // células em animação de limpeza
+    this.suppressClick = false;
+    this.buildBoard();
+    this.bindGlobal();
+  }
+  attach(game) { this.game = game; this.render(); }
+
+  buildBoard() {
+    const n = CONFIG.BOARD_SIZE;
+    this.el.board.style.gridTemplateColumns = `repeat(${n}, var(--cell))`;
+    this.el.board.innerHTML = '';
+    this.cells = [];
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const d = document.createElement('div');
+        d.className = 'cell';
+        d.dataset.r = r; d.dataset.c = c;
+        this.el.board.appendChild(d);
+        this.cells.push(d);
+      }
+    }
+    // clique para posicionar
+    this.el.board.addEventListener('click', e => {
+      if (this.suppressClick) return;
+      const cell = e.target.closest('.cell');
+      if (cell) this.tryPlaceAt(+cell.dataset.r, +cell.dataset.c);
+    });
+    // pré-visualização com o mouse
+    this.el.board.addEventListener('mousemove', e => {
+      const cell = e.target.closest('.cell');
+      if (cell) this.preview(+cell.dataset.r, +cell.dataset.c);
+    });
+    this.el.board.addEventListener('mouseleave', () => this.clearPreview());
+  }
+
+  bindGlobal() {
+    this.el.endTurnBtn.addEventListener('click', () => this.game.endTurn());
+    this.el.rotateBtn.addEventListener('click', () => this.rotateSelected());
+    this.el.restartBtn.addEventListener('click', () => { this.hideModal(); this.game.newRun(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'r' || e.key === 'R') this.rotateSelected();
+      if (e.key === 'Escape') { this.selected = null; this.clearPreview(); this.render(); }
+      if (e.key === ' ' && this.game.state === 'playing' && e.target === document.body) {
+        e.preventDefault(); this.game.endTurn();
+      }
+    });
+  }
+
+  rotateSelected() {
+    if (!this.selected) return;
+    this.selected.rotate();
+    this.clearPreview();
+    this.render();
+  }
+
+  cellAt(r, c) { return this.cells[r * CONFIG.BOARD_SIZE + c]; }
+
+  preview(row, col) {
+    this.clearPreview();
+    if (!this.selected || this.game.state !== 'playing') return;
+    const ok = this.game.board.canPlace(this.selected, row, col);
+    this.selected.cells.forEach(([dr, dc]) => {
+      const r = row + dr, c = col + dc;
+      if (r < CONFIG.BOARD_SIZE && c < CONFIG.BOARD_SIZE) {
+        const el = this.cellAt(r, c);
+        if (el) el.classList.add(ok ? 'preview-ok' : 'preview-bad');
+      }
+    });
+  }
+  clearPreview() {
+    this.cells.forEach(c => c.classList.remove('preview-ok', 'preview-bad'));
+  }
+
+  tryPlaceAt(row, col) {
+    if (!this.selected) { this.el.tip.textContent = 'Escolha uma peça da mão primeiro.'; return; }
+    const piece = this.selected;
+    if (this.game.playPiece(piece, row, col)) {
+      this.selected = null;
+      this.clearPreview();
+      this.render();
+    } else {
+      this.el.tip.textContent = 'Não cabe aí. Gire a peça (R) ou tente outro espaço.';
+    }
+  }
+
+  /* Guarda as células que estão animando para que o render seguinte não
+     apague a animação (o grid lógico já foi limpo nesse momento). */
+  flashCells(cells) {
+    cells.forEach(([r, c]) => {
+      const el = this.cellAt(r, c);
+      if (!el) return;
+      const color = this.game.board.grid[r][c];
+      this.flashing.add(r + ':' + c);
+      el.className = 'cell filled clearing';
+      if (color) el.style.background = EFFECTS[color].css;
+      setTimeout(() => {
+        this.flashing.delete(r + ':' + c);
+        el.className = 'cell';
+        el.style.background = '';
+      }, 320);
+    });
+  }
+
+  /* --- desenha a matriz de blocos de uma peça (mão, ghost, recompensa) --- */
+  pieceMatrix(piece, blockClass) {
+    const wrap = document.createElement('div');
+    wrap.style.display = 'grid';
+    wrap.style.gap = blockClass === 'ghost' ? 'var(--gap)' : '3px';
+    wrap.style.gridTemplateColumns = `repeat(${piece.width}, auto)`;
+    const filled = new Set(piece.cells.map(([r, c]) => r + ':' + c));
+    for (let r = 0; r < piece.height; r++) {
+      for (let c = 0; c < piece.width; c++) {
+        const b = document.createElement('div');
+        const on = filled.has(r + ':' + c);
+        b.className = 'blk' + (on ? '' : ' off');
+        if (on) {
+          b.style.background = piece.effect.css;
+          b.style.boxShadow = 'inset 0 -2px 0 rgba(0,0,0,.3)';
+        }
+        wrap.appendChild(b);
+      }
+    }
+    return wrap;
+  }
+
+  renderHand() {
+    const hand = this.el.hand;
+    hand.innerHTML = '';
+    this.game.hand.forEach(piece => {
+      const node = document.createElement('div');
+      node.className = 'piece';
+      node.tabIndex = 0;
+      node.title = `${piece.name} — ${piece.effect.describe(piece.value)}`;
+      node.setAttribute('aria-label', node.title);
+      if (this.selected && this.selected.id === piece.id) node.classList.add('selected');
+      if (!this.game.board.hasRoomFor(piece)) node.classList.add('unplayable');
+
+      node.style.gridTemplateColumns = `repeat(${piece.width}, auto)`;
+      const filled = new Set(piece.cells.map(([r, c]) => r + ':' + c));
+      for (let r = 0; r < piece.height; r++) {
+        for (let c = 0; c < piece.width; c++) {
+          const b = document.createElement('div');
+          const on = filled.has(r + ':' + c);
+          b.className = 'blk' + (on ? '' : ' off');
+          if (on) { b.style.background = piece.effect.css; b.style.boxShadow = 'inset 0 -2px 0 rgba(0,0,0,.3)'; }
+          node.appendChild(b);
+        }
+      }
+
+      const select = () => {
+        this.selected = (this.selected && this.selected.id === piece.id) ? null : piece;
+        this.clearPreview();
+        this.el.tip.textContent = this.selected
+          ? `${piece.name}: ${piece.effect.describe(piece.value)}. Clique no tabuleiro para encaixar.`
+          : 'Clique numa peça e depois no tabuleiro — ou arraste.';
+        this.render();
+      };
+      node.addEventListener('click', select);
+      node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
+      node.addEventListener('pointerdown', e => this.startDrag(e, piece));
+      hand.appendChild(node);
+    });
+  }
+
+  /* --- arrastar e soltar (mouse e toque) --- */
+  startDrag(e, piece) {
+    if (this.game.state !== 'playing' || e.button === 2) return;
+    let moved = false;
+    const ghost = document.createElement('div');
+    ghost.className = 'drag-ghost';
+    const paint = () => {
+      ghost.innerHTML = '';
+      ghost.style.gridTemplateColumns = `repeat(${piece.width}, var(--cell))`;
+      const filled = new Set(piece.cells.map(([r, c]) => r + ':' + c));
+      for (let r = 0; r < piece.height; r++)
+        for (let c = 0; c < piece.width; c++) {
+          const b = document.createElement('div');
+          const on = filled.has(r + ':' + c);
+          b.className = 'blk' + (on ? '' : ' off');
+          if (on) b.style.background = piece.effect.css;
+          ghost.appendChild(b);
+        }
+    };
+
+    const move = ev => {
+      if (!moved) {
+        moved = true;
+        this.selected = piece;   // só vira seleção de fato ao arrastar
+        this.renderHand();
+        paint();
+        document.body.appendChild(ghost);
+      }
+      ghost.style.left = ev.clientX + 'px';
+      ghost.style.top = ev.clientY + 'px';
+      const target = document.elementFromPoint(ev.clientX, ev.clientY);
+      const cell = target && target.closest ? target.closest('.cell') : null;
+      this.clearPreview();
+      if (cell) this.preview(+cell.dataset.r, +cell.dataset.c);
+    };
+
+    const up = ev => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      if (moved) {
+        ghost.remove();
+        const target = document.elementFromPoint(ev.clientX, ev.clientY);
+        const cell = target && target.closest ? target.closest('.cell') : null;
+        this.clearPreview();
+        this.suppressClick = true;   // evita o clique fantasma logo após soltar
+        setTimeout(() => { this.suppressClick = false; }, 0);
+        if (cell) this.tryPlaceAt(+cell.dataset.r, +cell.dataset.c);
+        else this.render();
+      }
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  }
+
+  renderBoard() {
+    for (let r = 0; r < CONFIG.BOARD_SIZE; r++) {
+      for (let c = 0; c < CONFIG.BOARD_SIZE; c++) {
+        if (this.flashing.has(r + ':' + c)) continue;   // deixa a animação terminar
+        const el = this.cellAt(r, c);
+        const v = this.game.board.grid[r][c];
+        el.className = 'cell' + (v ? ' filled' : '');
+        el.style.background = v ? EFFECTS[v].css : '';
+      }
+    }
+  }
+
+  chip(container, cls, icon, text) {
+    const s = document.createElement('span');
+    s.className = `chip ${cls} pop`;
+    s.textContent = `${icon} ${text}`;
+    container.appendChild(s);
+  }
+
+  render() {
+    const g = this.game, p = g.player, e = g.enemy;
+
+    this.el.stageTag.textContent = `Fase ${g.stage}`;
+    this.el.pHp.textContent = p.hp;
+    this.el.pMaxHp.textContent = p.maxHp;
+    this.el.pHpBar.style.width = (p.hp / p.maxHp * 100) + '%';
+    this.el.pChips.innerHTML = '';
+    if (p.block > 0) this.chip(this.el.pChips, 'block', '🛡️', `${p.block} de escudo`);
+
+    this.el.deckCount.textContent = g.deck.drawPile.length;
+    this.el.discardCount.textContent = g.deck.discard.length;
+
+    this.el.eName.textContent = e.name;
+    this.el.eFace.textContent = e.face;
+    this.el.eTitle.textContent = e.title;
+    this.el.eHp.textContent = e.hp;
+    this.el.eMaxHp.textContent = e.maxHp;
+    this.el.eHpBar.style.width = (e.hp / e.maxHp * 100) + '%';
+    this.el.eChips.innerHTML = '';
+    if (e.block > 0) this.chip(this.el.eChips, 'block', '🛡️', `${e.block} de escudo`);
+    if (e.poison > 0) this.chip(this.el.eChips, 'poison', '☠️', `${e.poison} de veneno`);
+    if (e.strength > 0) this.chip(this.el.eChips, 'power', '💪', `+${e.strength} de dano`);
+
+    if (e.intent) {
+      this.el.intentValue.innerHTML = `<span>${e.intent.icon}</span> ${e.intent.label} <b>${e.intent.value}</b>`;
+      this.el.intentHint.textContent = {
+        attack: 'Ganhe escudo ou derrube a vida dele antes.',
+        heavy: 'Golpe forte a caminho — vale gastar azul.',
+        buff: 'Se ele se fortalecer, os próximos ataques doem mais.',
+        defend: 'O escudo dele absorve o seu próximo dano.',
+      }[e.intent.type] || '';
+    }
+
+    this.renderBoard();
+    this.renderHand();
+    this.el.log.innerHTML = g.logs.map(l => `<p>${l}</p>`).join('');
+    this.el.endTurnBtn.disabled = g.state !== 'playing';
+
+    // Aviso quando nada mais encaixa
+    if (g.state === 'playing' && g.hand.length && !g.hand.some(p2 => g.board.hasRoomFor(p2))) {
+      this.el.tip.textContent = 'Sem espaço para nenhuma peça. Passe o turno para limpar a mão e comprar de novo.';
+    }
+  }
+
+  /* --- telas --- */
+  showModal(html) { this.el.modal.innerHTML = html; this.el.overlay.hidden = false; }
+  hideModal() { this.el.overlay.hidden = true; }
+
+  showRewards(options) {
+    this.showModal(`
+      <h2>Fase ${this.game.stage} vencida</h2>
+      <p>Escolha uma peça para levar no deck. Ela entra no baralho das próximas fases.</p>
+      <div class="rewards" id="rewards"></div>
+      <button class="ghost-btn" id="skipReward">Seguir sem pegar nada</button>
+    `);
+    const box = document.getElementById('rewards');
+    options.forEach(piece => {
+      const card = document.createElement('div');
+      card.className = 'reward';
+      card.tabIndex = 0;
+      const mini = this.pieceMatrix(piece);
+      mini.className = 'mini';
+      mini.style.justifyContent = 'center';
+      card.appendChild(mini);
+      const name = document.createElement('div');
+      name.className = 'name'; name.textContent = piece.name;
+      const desc = document.createElement('div');
+      desc.className = 'desc';
+      desc.textContent = `${piece.effect.icon} ${piece.effect.describe(piece.value)} · ${piece.size} blocos`;
+      card.append(name, desc);
+      const take = () => { this.hideModal(); this.game.takeReward(piece); };
+      card.addEventListener('click', take);
+      card.addEventListener('keydown', ev => { if (ev.key === 'Enter') take(); });
+      box.appendChild(card);
+    });
+    document.getElementById('skipReward').addEventListener('click', () => {
+      this.hideModal(); this.game.takeReward(null);
+    });
+  }
+
+  showGameOver() {
+    this.showModal(`
+      <h2>Fim de jogo</h2>
+      <p>Você chegou à fase ${this.game.stage} com um deck de ${this.game.deck.cards.length} peças.</p>
+      <button class="end-turn" id="againBtn">Jogar de novo</button>
+    `);
+    document.getElementById('againBtn').addEventListener('click', () => {
+      this.hideModal(); this.game.newRun();
+    });
+  }
+}
+
+/* ------------------------------ boot ------------------------------ */
+const ui = new UI();
+const game = new Game(ui);
+ui.attach(game);
+</script>
+</body>
+</html>
