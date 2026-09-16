@@ -3,34 +3,43 @@ import { GameState, StationType } from '../types';
 import { STATION_LABELS } from '../game/initialState';
 
 const STATION_STYLES: Record<StationType, string> = {
-  fridge: 'bg-cyan-950 border-cyan-500 text-cyan-300',
-  pantry: 'bg-violet-950 border-violet-500 text-violet-300',
-  cutting_board: 'bg-amber-950 border-amber-500 text-amber-300',
-  stove: 'bg-rose-950 border-rose-500 text-rose-300',
-  counter: 'bg-emerald-950 border-emerald-500 text-emerald-300',
-  empty: 'bg-slate-900 border-slate-800 text-slate-700',
+  geladeira: 'bg-cyan-950 border-cyan-500 text-cyan-300',
+  despensa: 'bg-violet-950 border-violet-500 text-violet-300',
+  tabua_corte: 'bg-amber-950 border-amber-500 text-amber-300',
+  fogao: 'bg-rose-950 border-rose-500 text-rose-300',
+  forno: 'bg-orange-950 border-orange-500 text-orange-300',
+  balcao: 'bg-emerald-950 border-emerald-500 text-emerald-300',
+  lixeira: 'bg-slate-800 border-slate-500 text-slate-300',
+  montagem: 'bg-fuchsia-950 border-fuchsia-500 text-fuchsia-300',
+  carregador: 'bg-lime-950 border-lime-500 text-lime-300',
+  vazio: 'bg-slate-900 border-slate-800 text-slate-700',
 };
 
 const STATION_ICONS: Record<StationType, string> = {
-  fridge: '🧊',
-  pantry: '🧺',
-  cutting_board: '🔪',
-  stove: '🔥',
-  counter: '🛎️',
-  empty: '',
+  geladeira: '🧊',
+  despensa: '🧺',
+  tabua_corte: '🔪',
+  fogao: '🔥',
+  forno: '⏱️',
+  balcao: '🛎️',
+  lixeira: '🗑️',
+  montagem: '🍽️',
+  carregador: '🔌',
+  vazio: '',
 };
 
 const FACING_ROTATION: Record<string, string> = {
-  north: '-rotate-90',
-  south: 'rotate-90',
-  east: 'rotate-0',
-  west: 'rotate-180',
+  norte: '-rotate-90',
+  sul: 'rotate-90',
+  leste: 'rotate-0',
+  oeste: 'rotate-180',
 };
 
 const STAGE_COLOR: Record<string, string> = {
-  raw: 'bg-red-500',
-  chopped: 'bg-orange-400',
-  cooked: 'bg-yellow-300',
+  crua: 'bg-red-500',
+  picada: 'bg-orange-400',
+  cozida: 'bg-yellow-300',
+  queimada: 'bg-black border border-red-600',
 };
 
 interface Props {
@@ -54,23 +63,38 @@ export default function GridView({ state }: Props) {
         {state.cells.flatMap((row, y) =>
           row.map((cell, x) => {
             const isRobotHere = robot.x === x && robot.y === y;
+            const isEmptyFloor = cell.station === 'vazio';
+            const floorStyle =
+              cell.floor === 'esteira'
+                ? 'bg-sky-950/70 border-sky-800'
+                : cell.floor === 'oleo'
+                ? 'bg-yellow-950/60 border-yellow-800'
+                : '';
             return (
               <div
                 key={`${x}-${y}`}
-                className={`relative border ${cell.station !== 'empty' ? 'border-2' : ''} ${STATION_STYLES[cell.station]} flex items-center justify-center text-[10px] sm:text-xs font-medium`}
+                className={`relative border ${cell.station !== 'vazio' ? 'border-2' : ''} ${
+                  isEmptyFloor && floorStyle ? floorStyle : STATION_STYLES[cell.station]
+                } flex items-center justify-center text-[10px] sm:text-xs font-medium`}
               >
-                {cell.station !== 'empty' && (
+                {cell.station !== 'vazio' && (
                   <div className="flex flex-col items-center gap-0.5 select-none opacity-90">
                     <span className="text-base sm:text-lg leading-none">{STATION_ICONS[cell.station]}</span>
                     <span className="hidden sm:block leading-tight text-center">{STATION_LABELS[cell.station]}</span>
                   </div>
                 )}
+                {isEmptyFloor && cell.floor === 'esteira' && (
+                  <span className="text-sm sm:text-base opacity-70 select-none">
+                    {cell.conveyorDir === 'norte' ? '↑' : cell.conveyorDir === 'sul' ? '↓' : cell.conveyorDir === 'leste' ? '→' : '←'}
+                  </span>
+                )}
+                {isEmptyFloor && cell.floor === 'oleo' && <span className="text-sm sm:text-base opacity-70 select-none">🛢️</span>}
 
                 {isRobotHere && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div
                       className={`w-3/4 h-3/4 rounded-full bg-indigo-500/90 border-2 border-indigo-200 flex items-center justify-center shadow-lg shadow-indigo-900/60 transition-transform duration-150 ${FACING_ROTATION[robot.facing]}`}
-                      title={`Robot facing ${robot.facing}`}
+                      title={`Robô virado para ${robot.facing}`}
                     >
                       <span className="text-white text-sm sm:text-base -rotate-0">🤖</span>
                     </div>
@@ -89,11 +113,17 @@ export default function GridView({ state }: Props) {
       </div>
 
       <div className="shrink-0 flex flex-wrap gap-3 text-xs text-slate-400 justify-center">
-        <Legend swatch="bg-cyan-950 border-cyan-500" label="Fridge (tomato)" />
-        <Legend swatch="bg-violet-950 border-violet-500" label="Pantry (lettuce, onion)" />
-        <Legend swatch="bg-amber-950 border-amber-500" label="Cutting Board" />
-        <Legend swatch="bg-rose-950 border-rose-500" label="Stove" />
-        <Legend swatch="bg-emerald-950 border-emerald-500" label="Counter" />
+        <Legend swatch="bg-cyan-950 border-cyan-500" label="Geladeira (tomate, carne)" />
+        <Legend swatch="bg-violet-950 border-violet-500" label="Despensa (alface, cebola, pão)" />
+        <Legend swatch="bg-amber-950 border-amber-500" label="Tábua de Corte" />
+        <Legend swatch="bg-rose-950 border-rose-500" label="Fogão" />
+        <Legend swatch="bg-orange-950 border-orange-500" label="Forno (com timer)" />
+        <Legend swatch="bg-fuchsia-950 border-fuchsia-500" label="Bancada de Montagem" />
+        <Legend swatch="bg-slate-800 border-slate-500" label="Lixeira" />
+        <Legend swatch="bg-lime-950 border-lime-500" label="Carregador" />
+        <Legend swatch="bg-emerald-950 border-emerald-500" label="Balcão" />
+        <Legend swatch="bg-sky-950/70 border-sky-800" label="Esteira Rolante" />
+        <Legend swatch="bg-yellow-950/60 border-yellow-800" label="Óleo (escorregadio)" />
       </div>
     </div>
   );

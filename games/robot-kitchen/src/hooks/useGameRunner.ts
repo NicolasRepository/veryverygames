@@ -1,9 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GameState } from '../types';
 import { createInitialState } from '../game/initialState';
-import { ActionResult, chopItem, cookItem, deliverItem, dropItem, moveRobot, orderItemQuery, orderStageQuery, scanCell, takeItem, tickState } from '../game/gameEngine';
+import {
+  ActionResult,
+  batteryQuery,
+  chargeRobot,
+  chopItem,
+  cookItem,
+  deliverItem,
+  distanceToQuery,
+  dropItem,
+  isHoldingQuery,
+  moveRobot,
+  orderItemQuery,
+  orderStageQuery,
+  scanCell,
+  takeItem,
+  tickState,
+} from '../game/gameEngine';
 import { parseProgram } from '../dsl/parser';
-import { InterpreterAPI, RuntimeErrorSignal, runProgram } from '../dsl/interpreter';
+import { createEnv, InterpreterAPI, RuntimeErrorSignal, runProgram } from '../dsl/interpreter';
 
 export type RunStatus = 'idle' | 'running' | 'paused' | 'done' | 'error';
 
@@ -12,41 +28,56 @@ export interface CodeError {
   line: number;
 }
 
-const DEFAULT_CODE = `// Fetches, preps, and delivers whatever the active order needs.
-// orderItem() / orderStage() let you read the current order from code.
-// scan() and every action now read the tile in FRONT of the robot, and
-// stations block movement — bump into one (move toward it) to face it.
+const DEFAULT_CODE = `// Busca, prepara e entrega o que o pedido ativo precisa.
+// A sintaxe (loop, if, repeat...) é em inglês; os nomes de lugares e
+// itens do jogo ("norte", "geladeira", "tomate"...) são em português.
 
-// 1) Go get the ingredient the order needs.
-if (orderItem() == "tomato") {
-  move("west")
-  move("north")          // bump the Fridge -> now facing it
-  take("tomato")
-  repeat(3) { move("east") }
-} else {
-  repeat(5) { move("east") }
-  move("north")          // bump the Pantry -> now facing it
-  take(orderItem())
-  repeat(3) { move("west") }
+// Função reutilizável: vai até a Geladeira e pega um item.
+def ir_para_geladeira() {
+  move("oeste")
+  move("norte")   // esbarra na Geladeira -> agora virado para ela
 }
 
-// 2) Prep it: chop or cook depending on what the order wants.
-if (orderStage() == "chopped") {
-  move("north")          // bump the Cutting Board -> now facing it
+// Guarda o que o pedido precisa numa variável.
+var alvo = orderItem()
+
+if (alvo == "tomate") {
+  ir_para_geladeira()
+  take("tomate")
+  repeat(3) { move("leste") }
+} else {
+  repeat(5) { move("leste") }
+  move("norte")   // esbarra na Despensa -> agora virado para ela
+  take(alvo)
+  repeat(3) { move("oeste") }
+}
+
+// Se por acaso pegou o item errado, joga fora na lixeira antes de continuar.
+if (isHolding() == false) {
+  // nada em mãos, nada a fazer aqui
+} else if (orderItem() != alvo) {
+  move("sul")
+  repeat(4) { move("sul") }
+  drop()
+}
+
+// Prepara: pica ou cozinha dependendo do que o pedido quer.
+if (orderStage() == "picada") {
+  move("norte")   // esbarra na Tábua de Corte -> agora virado para ela
   chop()
-  repeat(6) { move("south") }
+  repeat(6) { move("sul") }
 } else {
-  move("east")
-  repeat(2) { move("south") }
-  move("south")          // bump the Stove -> now facing it
+  move("leste")
+  repeat(2) { move("sul") }
+  move("sul")      // esbarra no Fogão -> agora virado para ele
   cook()
-  move("west")
-  repeat(4) { move("south") }
+  move("oeste")
+  repeat(4) { move("sul") }
 }
 
-// 3) Walk it to the Delivery Counter and hand it off.
-repeat(3) { move("east") }
-move("east")              // bump the Counter -> now facing it
+// Leva até o Balcão e entrega.
+repeat(3) { move("leste") }
+move("leste")      // esbarra no Balcão -> agora virado para ele
 deliver()
 `;
 
@@ -74,6 +105,7 @@ export function useGameRunner() {
   speedRef.current = speed;
 
   const genRef = useRef<AsyncGenerator<void, void, void> | null>(null);
+  const envRef = useRef(createEnv());
   const runTokenRef = useRef(0);
   const timerRef = useRef<number | null>(null);
 
@@ -103,6 +135,10 @@ export function useGameRunner() {
       scan: () => dispatch((s) => scanCell(s)),
       orderItem: () => dispatch((s) => orderItemQuery(s)),
       orderStage: () => dispatch((s) => orderStageQuery(s)),
+      isHolding: () => dispatch((s) => isHoldingQuery(s)),
+      distanceTo: (station) => dispatch((s) => distanceToQuery(s, station)),
+      battery: () => dispatch((s) => batteryQuery(s)),
+      charge: () => dispatch((s) => chargeRobot(s)),
     }),
     [dispatch],
   );
@@ -158,7 +194,8 @@ export function useGameRunner() {
       return false;
     }
     setCodeError(null);
-    genRef.current = runProgram(stmts, api);
+    envRef.current = createEnv();
+    genRef.current = runProgram(stmts, api, envRef.current);
     return true;
   }, [code, api, setRunStatus]);
 
@@ -216,6 +253,7 @@ export function useGameRunner() {
     clearTimer();
     runTokenRef.current += 1;
     genRef.current = null;
+    envRef.current = createEnv();
     setCodeError(null);
     setRunStatus('idle');
     const fresh = createInitialState();

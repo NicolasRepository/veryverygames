@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { GameState, LogEntry } from '../types';
 import { RunStatus } from '../hooks/useGameRunner';
-import { ITEM_ICONS } from '../game/initialState';
+import { ITEM_ICONS, OVEN_BURN_TICKS, OVEN_READY_TICKS } from '../game/initialState';
 
 interface Props {
   state: GameState;
@@ -23,6 +23,14 @@ const LOG_STYLES: Record<LogEntry['kind'], string> = {
   error: 'text-red-400',
 };
 
+const STATUS_LABELS: Record<RunStatus, string> = {
+  idle: 'ocioso',
+  running: 'rodando',
+  paused: 'pausado',
+  done: 'concluído',
+  error: 'erro',
+};
+
 export default function StatusPanel({ state, status }: Props) {
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -31,19 +39,21 @@ export default function StatusPanel({ state, status }: Props) {
   }, [state.logs.length]);
 
   const activeOrder = state.orders[0];
+  const energyPct = Math.round((state.robot.energy / state.maxEnergy) * 100);
+  const energyColor = energyPct <= 20 ? 'bg-red-500' : energyPct <= 50 ? 'bg-amber-400' : 'bg-emerald-500';
 
   return (
     <div className="flex flex-col h-full min-h-0 gap-3 overflow-y-auto lg:overflow-visible">
       <div className="shrink-0 flex flex-wrap items-center justify-between gap-2">
         <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide whitespace-nowrap ${STATUS_STYLES[status]}`}>
-          {status}
+          {STATUS_LABELS[status]}
         </span>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
           <span className="whitespace-nowrap">
-            Score: <span className="text-slate-200 font-semibold">{state.score}</span>
+            Pontos: <span className="text-slate-200 font-semibold">{state.score}</span>
           </span>
           <span className="whitespace-nowrap">
-            Orders: <span className="text-slate-200 font-semibold">{state.ordersCompleted}</span>
+            Pedidos: <span className="text-slate-200 font-semibold">{state.ordersCompleted}</span>
           </span>
           <span className="whitespace-nowrap">
             Ticks: <span className="text-slate-200 font-semibold">{state.ticks}</span>
@@ -52,18 +62,18 @@ export default function StatusPanel({ state, status }: Props) {
       </div>
 
       <div className="shrink-0 rounded-md bg-slate-900 border border-slate-800 p-3 min-w-0">
-        <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Active Order</p>
+        <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Pedido Ativo</p>
         {activeOrder ? (
           <div className="flex items-center justify-between gap-2 min-w-0">
             <span className="text-slate-100 font-semibold truncate">
               {ITEM_ICONS[activeOrder.requires.name] ?? '🍽️'} {activeOrder.name}
             </span>
             <span className="text-xs text-slate-400 text-right whitespace-nowrap shrink-0">
-              needs {activeOrder.requires.stage} {activeOrder.requires.name}
+              precisa de {activeOrder.requires.stage} {activeOrder.requires.name}
             </span>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">No orders queued.</p>
+          <p className="text-sm text-slate-500">Nenhum pedido na fila.</p>
         )}
         <div className="flex flex-wrap gap-1.5 mt-2">
           {state.orders.slice(1).map((o) => (
@@ -75,20 +85,50 @@ export default function StatusPanel({ state, status }: Props) {
       </div>
 
       <div className="shrink-0 rounded-md bg-slate-900 border border-slate-800 p-3 min-w-0">
-        <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Robot</p>
+        <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Robô</p>
         <p className="text-sm text-slate-300 break-words">
-          Position ({state.robot.x}, {state.robot.y}) · facing {state.robot.facing}
+          Posição ({state.robot.x}, {state.robot.y}) · virado para {state.robot.facing}
         </p>
         <p className="text-sm text-slate-300 break-words">
-          Holding:{' '}
+          Segurando:{' '}
           {state.robot.inventory
             ? `${ITEM_ICONS[state.robot.inventory.name] ?? ''} ${state.robot.inventory.stage} ${state.robot.inventory.name}`
-            : 'nothing'}
+            : 'nada'}
         </p>
+        <div className="mt-2">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 mb-0.5">
+            <span>🔋 Bateria</span>
+            <span>
+              {state.robot.energy}/{state.maxEnergy}
+            </span>
+          </div>
+          <div className="h-1.5 rounded bg-slate-800 overflow-hidden">
+            <div className={`h-full ${energyColor} transition-all`} style={{ width: `${energyPct}%` }} />
+          </div>
+        </div>
       </div>
 
+      {(state.oven || state.assembly.slots.length > 0 || state.assembly.ready) && (
+        <div className="shrink-0 rounded-md bg-slate-900 border border-slate-800 p-3 min-w-0 flex flex-col gap-2">
+          {state.oven && (
+            <p className="text-xs text-orange-300 break-words">
+              ⏱️ Forno: {state.oven.item.name} · {state.oven.ticksElapsed}/{OVEN_READY_TICKS} ticks para ficar pronto (queima após{' '}
+              {OVEN_BURN_TICKS})
+            </p>
+          )}
+          {state.assembly.slots.length > 0 && (
+            <p className="text-xs text-fuchsia-300 break-words">
+              🍽️ Bancada: {state.assembly.slots.map((s) => `${s.stage} ${s.name}`).join(', ')}
+            </p>
+          )}
+          {state.assembly.ready && (
+            <p className="text-xs text-emerald-300 break-words">✅ Pronto na bancada: {state.assembly.ready.name}</p>
+          )}
+        </div>
+      )}
+
       <div className="flex-1 min-h-[160px] rounded-md bg-black/40 border border-slate-800 p-2 overflow-y-auto font-mono text-xs">
-        {state.logs.length === 0 && <p className="text-slate-600">Console output will appear here…</p>}
+        {state.logs.length === 0 && <p className="text-slate-600">A saída do console vai aparecer aqui…</p>}
         {state.logs.map((log) => (
           <p key={log.id} className={`${LOG_STYLES[log.kind]} break-words`}>
             {log.message}

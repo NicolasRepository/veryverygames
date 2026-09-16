@@ -1,138 +1,102 @@
 # Robot Kitchen 🤖
 
-A browser-based programming game (inspired by *The Farmer Was Replaced*) where you
-write English-syntax code to automate a robot in a kitchen: fetch ingredients,
-prep them, and deliver them to complete orders.
+Um jogo de programação no navegador (inspirado em *The Farmer Was Replaced*) em
+que você escreve código com sintaxe em inglês para automatizar um robô numa
+cozinha: buscar ingredientes, prepará-los e entregá-los para completar
+pedidos. Nomes de lugares e itens do jogo ficam em português.
 
-## Getting started
+## Como rodar
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open the printed local URL (usually `http://localhost:5173`).
+Depois abra a URL local impressa no terminal (geralmente `http://localhost:5173`).
 
-To type-check and build for production:
+Para checar os tipos e gerar o build de produção:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Project structure
+## Estrutura do projeto
 
 ```
 src/
-  types.ts                 Shared types: grid, robot, orders, AST, tokens
+  types.ts                 Tipos compartilhados: grade, robô, pedidos, AST, tokens
   dsl/
-    lexer.ts                Tokenizer for the DSL
-    parser.ts                Recursive-descent parser -> AST
-    interpreter.ts            Async-generator tree-walking interpreter (ticks one
-                               action at a time so it never blocks the UI thread)
+    lexer.ts                Tokenizador da DSL
+    parser.ts                Parser recursivo-descendente -> AST
+    interpreter.ts           Interpretador (gerador assíncrono, um yield por ação)
   game/
-    initialState.ts            8x8 grid layout, stations, ingredients, recipes
-    gameEngine.ts               Pure state-transition functions for each action
+    initialState.ts          Layout da cozinha, receitas, estado inicial
+    gameEngine.ts             Regras do jogo: mover, pegar, picar, cozinhar, entregar...
   hooks/
-    useGameRunner.ts            Glues parser + interpreter + game state together,
-                                 drives the run/pause/step/reset loop and speed control
+    useGameRunner.ts          Liga o interpretador ao estado do jogo e ao loop de execução
   components/
-    CodeEditor.tsx               Left panel: textarea editor + controls
-    GridView.tsx                  Right panel: CSS-grid rendering of the kitchen
-    StatusPanel.tsx                Status panel: order, score, robot state, console
-  App.tsx                    Composes the three panels
+    CodeEditor.tsx            Editor de código + controles de execução
+    GridView.tsx              Renderização da grade da cozinha
+    StatusPanel.tsx           Pedido ativo, robô, bateria, forno, bancada e console
+    RecipeBook.tsx            Referência de receitas e da DSL
+  App.tsx                     Layout principal com abas Cozinha / Receitas
 ```
 
-## The DSL
+## A linguagem (DSL)
 
-All keywords are English. One program is a sequence of statements; each robot
-action (`move`, `take`, `drop`, `chop`, `cook`, `deliver`, `scan`, `orderItem`,
-`orderStage`) advances the game by exactly one tick.
+A sintaxe (palavras-chave, chamadas de função, operadores) é em inglês; os
+valores literais que representam lugares e itens do jogo (direções, nomes de
+estações, ingredientes) são em português.
 
-```js
-// Commands
-move("north" | "south" | "east" | "west")
-take("item_name")     // only works facing a supply station stocking that item
-drop()
-chop()                  // only works facing the Cutting Board
-cook()                   // only works facing the Stove
-deliver()                // only works facing the Delivery Counter
-scan()                    // returns what's in the cell the robot is FACING:
-                          // a station name, "empty", or "wall"
-orderItem()               // returns the ingredient name the active order needs
-orderStage()                // returns the stage it needs: "raw" | "chopped" | "cooked"
+### Ações
+- `move("norte" | "sul" | "leste" | "oeste")`
+- `take("nome_do_item")`
+- `drop()`
+- `chop()`
+- `cook()`
+- `deliver()`
+- `scan()` → nome da estação em frente, `"vazio"` ou `"parede"`
+- `orderItem()` / `orderStage()` → o que o pedido ativo precisa
+- `isHolding()` → `true`/`false` se o robô está com algo em mãos
+- `distanceTo("fogao")` → distância (em passos) até a estação mais próxima desse tipo
+- `battery()` → energia restante do robô
+- `charge()` → recarrega a bateria (precisa estar de frente para o Carregador)
 
-// Control flow
-loop { ... }              // infinite loop, use break to exit
-repeat(3) { ... }          // fixed number of iterations
-if (cond) { ... } else { ... }
-break
-continue
-
-// Conditions
-scan() == "cutting_board"
-orderItem() == "tomato"
-true / false
-a and b / a or b / not a
+### Variáveis e funções
 ```
+var alvo = orderItem()
+alvo = "tomate"
 
-### Movement & collision
-
-Stations now have **collision** — the robot can never stand on top of one.
-Calling `move(dir)` toward a station (or the kitchen wall) doesn't move the
-robot; it just turns to face that direction ("bumping" into it), which is
-exactly what you want, since `take`, `chop`, `cook`, `deliver`, and `scan` all
-act on the tile the robot is **facing**, not the tile it's standing on.
-
-### Example program
-
-```js
-// Fetch whatever the order needs, prep it, and deliver it.
-if (orderItem() == "tomato") {
-  move("west")
-  move("north")   // bump the Fridge -> now facing it
-  take("tomato")
-} else {
-  repeat(5) { move("east") }
-  move("north")   // bump the Pantry -> now facing it
-  take(orderItem())
+def ir_para_geladeira() {
+  move("oeste")
+  move("norte")
 }
 ```
 
-## Kitchen layout (8x8 grid)
+### Controle de fluxo
+```
+loop { ... }
+repeat(n) { ... }
+if (cond) { ... } else { ... }
+break
+continue
+== · != · and · or · not · true · false
+```
 
-| Station          | Position | Provides / Does        |
-|------------------|----------|-------------------------|
-| Fridge           | (0, 0)   | tomato                  |
-| Cutting Board    | (3, 0)   | chop()                  |
-| Pantry           | (6, 0)   | lettuce, onion          |
-| Stove            | (4, 4)   | cook()                  |
-| Delivery Counter | (7, 7)   | deliver()                |
+## Mecânicas de cozinha
 
-The robot spawns at (1, 1) — stations block movement, so it can never spawn
-on top of one.
-
-## Items & orders
-
-Ingredients: `tomato`, `lettuce`, `onion`. Each order randomly picks one of
-five recipes, each needing a single ingredient prepped to a single stage:
-
-| Order           | Needs             | Reward |
-|-----------------|-------------------|--------|
-| Salad           | chopped tomato    | 10     |
-| Coleslaw        | chopped lettuce   | 10     |
-| Grilled Onion   | cooked onion      | 15     |
-| Onion Rings     | chopped onion     | 12     |
-| Roasted Tomato  | cooked tomato     | 15     |
-
-Delivering the right item scores its reward and queues a new random order.
-
-## Notes on the interpreter
-
-The interpreter (`src/dsl/interpreter.ts`) is a tree-walking evaluator built
-entirely out of `async function*` generators. `yield` happens exactly once per
-robot action, so the driving code (`useGameRunner`) can `await gen.next()` on a
-`setTimeout` cadence controlled by the speed selector — this is what lets
-`loop { move("east") }` run indefinitely at a chosen tick rate without ever
-freezing the React UI, and lets Pause/Step/Reset interrupt or single-step
-execution cleanly.
+- **Lixeira**: como o robô só segura um item por vez, use `drop()` na
+  Lixeira para descartar um item errado ou queimado.
+- **Bancada de Montagem**: pratos compostos (como o Hamburguer) exigem levar
+  cada parte até a bancada com `drop()`; quando a receita se completa, use
+  `take("hamburguer")` para retirar o prato pronto.
+- **Forno (com timer)**: `drop()` no forno começa a cozinhar o item por
+  alguns ticks; se você não usar `take()` a tempo, o item queima e só serve
+  para a lixeira.
+- **Esteiras Rolantes**: empurram o robô automaticamente na direção da
+  esteira depois de um `move()` bem-sucedido.
+- **Óleo**: ao pisar nele com `move()`, o robô desliza até bater numa parede
+  ou estação.
+- **Bateria**: cada `move()` custa 1 de energia; recarregue com `charge()`
+  na Estação de Carga antes que ela acabe.

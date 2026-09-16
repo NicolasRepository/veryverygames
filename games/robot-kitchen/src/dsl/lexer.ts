@@ -12,6 +12,8 @@ const KEYWORDS: Record<string, TokenType> = {
   and: 'AND',
   or: 'OR',
   not: 'NOT',
+  var: 'VAR',
+  def: 'DEF',
 };
 
 export class LexError extends Error {
@@ -24,8 +26,8 @@ export class LexError extends Error {
 
 /**
  * Converts raw DSL source into a flat list of tokens.
- * The language is intentionally tiny: identifiers/keywords, string
- * literals, numbers, and a handful of punctuation/operator symbols.
+ * The language syntax stays in English (keywords, function calls); only the
+ * string arguments (place/item names) are Portuguese game content.
  */
 export function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
@@ -63,11 +65,11 @@ export function tokenize(source: string): Token[] {
       i++;
       let value = '';
       while (i < n && source[i] !== quote) {
-        if (source[i] === '\n') throw new LexError('Unterminated string literal', startLine);
+        if (source[i] === '\n') throw new LexError('String não terminada (aspas faltando)', startLine);
         value += source[i];
         i++;
       }
-      if (i >= n) throw new LexError('Unterminated string literal', startLine);
+      if (i >= n) throw new LexError('String não terminada (aspas faltando)', startLine);
       i++; // closing quote
       tokens.push({ type: 'STRING', value, line: startLine });
       continue;
@@ -128,7 +130,9 @@ export function tokenize(source: string): Token[] {
           i += 2;
           continue;
         }
-        throw new LexError(`Unexpected '=' (did you mean '=='?)`, line);
+        tokens.push({ type: 'ASSIGN', value: '=', line });
+        i++;
+        continue;
       case '!':
         if (peekNext() === '=') {
           tokens.push({ type: 'NEQ', value: '!=', line });
@@ -144,16 +148,16 @@ export function tokenize(source: string): Token[] {
           i += 2;
           continue;
         }
-        throw new LexError(`Unexpected '&'`, line);
+        throw new LexError(`Caractere inesperado '&'`, line);
       case '|':
         if (peekNext() === '|') {
           tokens.push({ type: 'OR', value: '||', line });
           i += 2;
           continue;
         }
-        throw new LexError(`Unexpected '|'`, line);
+        throw new LexError(`Caractere inesperado '|'`, line);
       default:
-        throw new LexError(`Unexpected character '${c}'`, line);
+        throw new LexError(`Caractere inesperado '${c}'`, line);
     }
   }
 

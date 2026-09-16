@@ -22,15 +22,15 @@ export default function App() {
             ← Hub de Jogos
           </a>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate">🤖 Robot Kitchen</h1>
-          <p className="text-xs sm:text-sm text-slate-400 truncate">Program a kitchen robot with a tiny English DSL.</p>
+          <p className="text-xs sm:text-sm text-slate-400 truncate">Programe um robô de cozinha com uma pequena DSL (sintaxe em inglês).</p>
         </div>
 
         <nav className="flex gap-1 shrink-0 bg-slate-900 border border-slate-800 rounded-lg p-1">
           <TabButton active={tab === 'kitchen'} onClick={() => setTab('kitchen')}>
-            🍳 Kitchen
+            🍳 Cozinha
           </TabButton>
           <TabButton active={tab === 'recipes'} onClick={() => setTab('recipes')}>
-            📖 Recipes
+            📖 Receitas
           </TabButton>
         </nav>
       </header>
@@ -39,7 +39,7 @@ export default function App() {
         {tab === 'kitchen' ? (
           <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,0.85fr)] gap-3 p-3 sm:p-4 overflow-y-auto lg:overflow-hidden">
             <section className="min-w-0 min-h-0 flex flex-col bg-slate-900/60 border border-slate-800 rounded-xl p-4 overflow-hidden">
-              <h2 className="shrink-0 text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wide">Code</h2>
+              <h2 className="shrink-0 text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wide">Código</h2>
               <div className="flex-1 min-h-0">
                 <CodeEditor
                   code={code}
@@ -58,7 +58,7 @@ export default function App() {
             </section>
 
             <section className="min-w-0 min-h-0 flex flex-col items-center bg-slate-900/60 border border-slate-800 rounded-xl p-4 overflow-hidden">
-              <h2 className="shrink-0 self-start text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wide">Kitchen</h2>
+              <h2 className="shrink-0 self-start text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wide">Cozinha</h2>
               <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
                 <GridView state={state} />
               </div>

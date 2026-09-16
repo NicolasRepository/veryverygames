@@ -14,10 +14,14 @@ export class ParseSyntaxError extends Error {
  *
  * Grammar (informal):
  *   program    := statement*
- *   statement  := loopStmt | repeatStmt | ifStmt | breakStmt | continueStmt | exprStmt
+ *   statement  := loopStmt | repeatStmt | ifStmt | breakStmt | continueStmt
+ *               | varDecl | funcDecl | assignStmt | exprStmt
  *   loopStmt   := 'loop' block
  *   repeatStmt := 'repeat' '(' expr ')' block
  *   ifStmt     := 'if' '(' expr ')' block ('else' block)?
+ *   varDecl    := 'var' IDENT '=' expr
+ *   funcDecl   := 'def' IDENT '(' ')' block
+ *   assignStmt := IDENT '=' expr
  *   exprStmt   := call
  *   block      := '{' statement* '}'
  *   expr       := or
@@ -25,7 +29,7 @@ export class ParseSyntaxError extends Error {
  *   and        := equality ('and' equality)*
  *   equality   := unary (('==' | '!=') unary)*
  *   unary      := 'not' unary | primary
- *   primary    := STRING | NUMBER | 'true' | 'false' | call
+ *   primary    := STRING | NUMBER | 'true' | 'false' | call | IDENT
  *   call       := IDENT '(' (expr (',' expr)*)? ')'
  */
 export class Parser {
@@ -44,6 +48,10 @@ export class Parser {
 
   private peek(): Token {
     return this.tokens[this.pos];
+  }
+
+  private peekAt(offset: number): Token {
+    return this.tokens[this.pos + offset] ?? this.tokens[this.tokens.length - 1];
   }
 
   private check(type: TokenType): boolean {
@@ -70,12 +78,12 @@ export class Parser {
   }
 
   private parseBlock(): Stmt[] {
-    this.expect('LBRACE', "Expected '{' to start a block");
+    this.expect('LBRACE', "Esperava '{' para iniciar um bloco");
     const stmts: Stmt[] = [];
     while (!this.check('RBRACE') && !this.check('EOF')) {
       stmts.push(this.parseStatement());
     }
-    this.expect('RBRACE', "Expected '}' to close block");
+    this.expect('RBRACE', "Esperava '}' para fechar o bloco");
     return stmts;
   }
 
@@ -89,17 +97,17 @@ export class Parser {
       }
       case 'REPEAT': {
         this.advance();
-        this.expect('LPAREN', "Expected '(' after 'repeat'");
+        this.expect('LPAREN', "Esperava '(' após 'repeat'");
         const count = this.parseExpr();
-        this.expect('RPAREN', "Expected ')' after repeat count");
+        this.expect('RPAREN', "Esperava ')' após a contagem do repeat");
         const body = this.parseBlock();
         return { kind: 'Repeat', count, body, line: tok.line };
       }
       case 'IF': {
         this.advance();
-        this.expect('LPAREN', "Expected '(' after 'if'");
+        this.expect('LPAREN', "Esperava '(' após 'if'");
         const cond = this.parseExpr();
-        this.expect('RPAREN', "Expected ')' after if condition");
+        this.expect('RPAREN', "Esperava ')' após a condição do if");
         const thenBlock = this.parseBlock();
         let elseBlock: Stmt[] | null = null;
         if (this.check('ELSE')) {
@@ -119,6 +127,33 @@ export class Parser {
       case 'CONTINUE':
         this.advance();
         return { kind: 'Continue', line: tok.line };
+      case 'VAR': {
+        this.advance();
+        const name = this.expect('IDENT', 'Esperava um nome de variável após "var"').value;
+        this.expect('ASSIGN', `Esperava '=' após "var ${name}"`);
+        const expr = this.parseExpr();
+        return { kind: 'VarDecl', name, expr, line: tok.line };
+      }
+      case 'DEF': {
+        this.advance();
+        const name = this.expect('IDENT', 'Esperava um nome de função após "def"').value;
+        this.expect('LPAREN', `Esperava '(' após o nome da função '${name}'`);
+        this.expect('RPAREN', `Funções não recebem parâmetros — esperava ')' após '${name}('`);
+        const body = this.parseBlock();
+        return { kind: 'FuncDecl', name, body, line: tok.line };
+      }
+      case 'IDENT': {
+        // Lookahead: IDENT '=' (not '==') is an assignment statement.
+        if (this.peekAt(1).type === 'ASSIGN') {
+          const name = tok.value;
+          this.advance(); // ident
+          this.advance(); // '='
+          const expr = this.parseExpr();
+          return { kind: 'Assign', name, expr, line: tok.line };
+        }
+        const expr = this.parseExpr();
+        return { kind: 'ExprStmt', expr, line: tok.line };
+      }
       default: {
         const expr = this.parseExpr();
         return { kind: 'ExprStmt', expr, line: tok.line };
@@ -187,13 +222,17 @@ export class Parser {
       case 'LPAREN': {
         this.advance();
         const expr = this.parseExpr();
-        this.expect('RPAREN', "Expected ')' to close expression");
+        this.expect('RPAREN', "Esperava ')' para fechar a expressão");
         return expr;
       }
       case 'IDENT': {
         const name = tok.value;
         this.advance();
-        this.expect('LPAREN', `Expected '(' after function name '${name}'`);
+        if (!this.check('LPAREN')) {
+          // Bare identifier: reference to a variable.
+          return { kind: 'Ident', name, line: tok.line };
+        }
+        this.advance(); // '('
         const args: Expr[] = [];
         if (!this.check('RPAREN')) {
           args.push(this.parseExpr());
@@ -202,11 +241,11 @@ export class Parser {
             args.push(this.parseExpr());
           }
         }
-        this.expect('RPAREN', `Expected ')' after arguments to '${name}'`);
+        this.expect('RPAREN', `Esperava ')' após os argumentos de '${name}'`);
         return { kind: 'Call', name, args, line: tok.line };
       }
       default:
-        throw new ParseSyntaxError(`Unexpected token '${tok.value || tok.type}'`, tok.line);
+        throw new ParseSyntaxError(`Token inesperado '${tok.value || tok.type}'`, tok.line);
     }
   }
 }

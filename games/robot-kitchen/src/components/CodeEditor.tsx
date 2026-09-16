@@ -40,24 +40,24 @@ export default function CodeEditor({
           onClick={isRunning ? onPause : isPaused ? onResume : onRun}
           className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors whitespace-nowrap"
         >
-          {isRunning ? '⏸ Pause' : isPaused ? '▶ Resume' : '▶ Run'}
+          {isRunning ? '⏸ Pausar' : isPaused ? '▶ Continuar' : '▶ Rodar'}
         </button>
         <button
           onClick={onStep}
           disabled={isRunning}
           className="px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors whitespace-nowrap"
         >
-          ⏭ Step
+          ⏭ Passo
         </button>
         <button
           onClick={onReset}
           className="px-3 py-1.5 rounded-md bg-rose-700 hover:bg-rose-600 text-white text-sm font-semibold transition-colors whitespace-nowrap"
         >
-          ⟲ Reset
+          ⟲ Reiniciar
         </button>
 
         <div className="flex items-center gap-1.5 ml-auto text-xs text-slate-400 shrink-0">
-          <label htmlFor="speed">Speed</label>
+          <label htmlFor="speed">Velocidade</label>
           <select
             id="speed"
             value={speed}
@@ -78,7 +78,7 @@ export default function CodeEditor({
         onChange={(e) => setCode(e.target.value)}
         spellCheck={false}
         className="flex-1 min-h-0 w-full resize-none rounded-md bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none text-slate-100 font-mono text-sm p-3 leading-relaxed overflow-auto"
-        placeholder={'loop {\n  move("east")\n}'}
+        placeholder={'loop {\n  move("leste")\n}'}
       />
 
       {codeError && (
@@ -90,11 +90,12 @@ export default function CodeEditor({
 
       <div className="shrink-0 text-[11px] text-slate-500 leading-relaxed border-t border-slate-800 pt-2 break-words">
         <p className="break-words">
-          move() · take() · drop() · chop() · cook() · deliver() · scan() · orderItem() · orderStage()
+          move() · take() · drop() · chop() · cook() · deliver() · scan() · orderItem() · orderStage() · isHolding() ·
+          distanceTo() · battery() · charge() · var · def
         </p>
         <p className="break-words">
-          loop {'{ }'} · repeat(n) {'{ }'} · if/else · break · continue — see the{' '}
-          <span className="text-slate-400">Recipes</span> tab for the full DSL cheat sheet.
+          loop {'{ }'} · repeat(n) {'{ }'} · if/else · break · continue — veja a aba{' '}
+          <span className="text-slate-400">Receitas</span> para a referência completa da DSL.
         </p>
       </div>
     </div>
