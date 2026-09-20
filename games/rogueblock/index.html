@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crisol do Éter</title>
+<meta name="description" content="Deckbuilder roguelike de alquimia cósmica sombria: encaixe Relíquias no Crisol, sobreviva aos Arautos e trace sua rota pelo mapa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <h1>Crisol do Éter</h1>
+    <span class="tag" id="depthTagTop">Profundidade 1</span>
+    <span class="tag currency" id="currencyBadge">💠 0</span>
+    <span class="spacer"></span>
+    <button class="ghost-btn" id="inventoryBtn">Baralho</button>
+    <button class="ghost-btn" id="restartBtn">Recomeçar Jornada</button>
+  </div>
+
+  <!-- ======================= TELA DE MAPA ======================= -->
+  <section id="mapScreen">
+    <div class="map-heading">
+      <h2 id="mapDepth">Profundidade 1</h2>
+      <p>Escolha uma rota. Cada caminho revela um destino diferente.</p>
+    </div>
+    <div class="map-nodes" id="mapNodes"></div>
+  </section>
+
+  <!-- ======================= TELA DE COMBATE ======================= -->
+  <section id="combatScreen" hidden>
+    <div class="stage">
+      <!-- Peregrino -->
+      <section class="panel" aria-label="Peregrino">
+        <h2>Você</h2>
+        <p class="sub">Relíquias só agem ao completar uma linha/coluna do Crisol. O Baluarte some no início do seu turno.</p>
+        <div class="stat-row"><span>Vida</span><span class="num"><span id="pHp">60</span>/<span id="pMaxHp">60</span></span></div>
+        <div class="bar"><i class="hp-fill" id="pHpBar" style="width:100%"></i></div>
+        <div class="chips" id="pChips"></div>
+        <div class="stat-row"><span>Baralho</span><span class="num" id="deckCount">0</span></div>
+        <div class="stat-row"><span>Descarte</span><span class="num" id="discardCount">0</span></div>
+        <div class="log" id="log" aria-live="polite"></div>
+      </section>
+
+      <!-- Crisol (tabuleiro) -->
+      <div class="board-col">
+        <span class="tag" id="depthTag">Profundidade 1</span>
+        <div id="board" role="grid" aria-label="Crisol"></div>
+        <div class="turn-bar">
+          <button class="ghost-btn" id="rotateBtn" title="Atalho: R">Girar Relíquia (R)</button>
+          <button class="end-turn" id="endTurnBtn">Passar o turno</button>
+        </div>
+        <p class="tip" id="tip">Clique numa Relíquia e depois no Crisol — ou arraste. Os efeitos só disparam ao completar uma linha ou coluna — limpar várias de uma vez multiplica o resultado.</p>
+        <div class="hand-wrap"><div class="hand" id="hand"></div></div>
+      </div>
+
+      <!-- Arauto -->
+      <section class="panel" aria-label="Arauto">
+        <span class="enemy-face" id="eFace">👹</span>
+        <h2 id="eName">Arauto</h2>
+        <p class="sub" id="eTitle"></p>
+        <div class="stat-row"><span>Vida</span><span class="num"><span id="eHp">0</span>/<span id="eMaxHp">0</span></span></div>
+        <div class="bar"><i class="enemy-fill" id="eHpBar" style="width:100%"></i></div>
+        <div class="chips" id="eChips"></div>
+        <div class="intent">
+          <div class="label">Próxima ação</div>
+          <div class="value" id="intentValue">—</div>
+          <div class="hint" id="intentHint"></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ======================= TELA DA LOJA ======================= -->
+  <section id="shopScreen" hidden>
+    <div class="shop-header">
+      <h2>Entreposto do Mercador Errante</h2>
+      <span class="tag currency" id="shopCurrency">💠 0</span>
+    </div>
+
+    <div class="shop-section">
+      <h3>Relíquias à venda</h3>
+      <div class="shop-buy-list" id="shopBuyList"></div>
+    </div>
+
+    <div class="shop-section">
+      <h3>Seu Baralho — aprimorar ou remover</h3>
+      <div class="shop-deck-list" id="shopDeckList"></div>
+    </div>
+
+    <button class="end-turn" id="shopLeaveBtn">Seguir viagem</button>
+  </section>
+
+  <!-- ======================= TELA DE EVENTO (VESTÍGIO) ======================= -->
+  <section id="eventScreen" hidden>
+    <div class="event-card">
+      <span class="event-icon" id="eventIcon">📜</span>
+      <h2 id="eventTitle">Vestígio</h2>
+      <p id="eventDescription"></p>
+      <div class="event-choices" id="eventChoices"></div>
+      <div class="event-outcome" id="eventOutcome" hidden></div>
+      <button class="end-turn" id="eventContinueBtn" hidden>Continuar</button>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" id="modal"></div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
