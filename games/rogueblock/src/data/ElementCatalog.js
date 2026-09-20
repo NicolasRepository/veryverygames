@@ -59,6 +59,22 @@ export const ElementCatalog = {
       encounter.log(`O inimigo recebe <b>${v}</b> de Corrosão Astral.`);
     },
   },
+  cyan: {
+    label: 'Prisma Etéreo',
+    lore: 'Luz fragmentada que dissolve o poder que a sombra acumulou.',
+    css: 'var(--cyan)',
+    icon: '🔷',
+    perBlock: 1,
+    describe: v => `${v} de Dispersão (some com o poder acumulado do Arauto; o excesso vira dano)`,
+    apply: (encounter, v) => {
+      const foe = encounter.foe;
+      const dispersed = Math.min(foe.might, v);
+      foe.might -= dispersed;
+      if (dispersed > 0) encounter.log(`Prisma Etéreo dispersa <b>${dispersed}</b> de poder acumulado do Arauto.`);
+      const overflow = v - dispersed;
+      if (overflow > 0) encounter.strikeFoe(overflow, 'Prisma Etéreo');
+    },
+  },
 };
 
 export const REWARD_ELEMENT_POOL = Object.keys(ElementCatalog);

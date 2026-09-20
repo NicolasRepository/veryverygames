@@ -1,9 +1,40 @@
-# Crisol do Éter
+# RogueBlock — Crisol do Éter
 
 Deckbuilder roguelike de posicionamento, com temática de **alquimia cósmica
 sombria**. Encaixe Relíquias no Crisol (tabuleiro), complete linhas e
-colunas para disparar Ignição, Éter Vital, Baluarte ou Corrosão Astral, e
-trace sua rota por um mapa procedural até enfrentar as Colheitas.
+colunas para disparar Ignição, Éter Vital, Baluarte, Corrosão Astral ou
+Prisma Etéreo, e trace sua rota por um mapa procedural até enfrentar as
+Colheitas.
+
+## Changelog desta revisão
+
+- **Correção crítica**: o modal de recompensa pós-Confronto podia abrir com
+  `rewardOptions` ainda indefinido e lançar uma exceção no meio da fila do
+  EventBus, travando a atualização de `RunState` logo depois de vencer uma
+  luta (o jogo "parecia" ter botões que não respondiam mais). A causa era
+  a ordem de inscrição dos listeners de `ENCOUNTER_WON`/`ENCOUNTER_LOST`:
+  `DOMController` escutava o evento bruto e podia rodar antes de
+  `RunState` terminar de montar o próprio estado. Agora `DOMController`
+  reage só a `RUN_CHANGED`, publicado por `RunState` depois que tudo já
+  foi atualizado — ver comentário em `src/ui/DOMController.js`.
+- Removido um `zoom: 0.85` global no CSS que encolhia a interface inteira
+  sem necessidade, prejudicando a legibilidade.
+- Adicionados breakpoints responsivos para telas pequenas (celular).
+- Novo Elemento: **Prisma Etéreo** (ciano) — dispersa o poder acumulado do
+  Arauto; o excesso vira dano direto.
+- Novas formas de Relíquia: Serpente e Bastião.
+- Dois novos Arautos: Ceifador de Marés Etéreas e Guardião do Selo Partido.
+- Dois novos Vestígios: O Santuário do Prisma Etéreo e A Cripta dos Arautos
+  Esquecidos.
+- Novo botão **Compêndio** na barra do topo: mostra todos os Elementos,
+  todas as formas de Relíquia (com raridade) e o bestiário completo de
+  Arautos — não só o que já está no baralho atual, mas tudo que o jogo
+  pode liberar.
+- Novo botão **Como Jogar**: regras resumidas em um modal, a qualquer
+  momento.
+- Jogo renomeado para **RogueBlock** (título, aba do navegador e cabeçalho;
+  o subtítulo "Crisol do Éter" e todos os termos internos de lore foram
+  mantidos).
 
 ## Como rodar
 
@@ -13,7 +44,7 @@ além do que você já tem:
 
 ```bash
 # Python (já vem em praticamente todo sistema)
-cd crisol-do-eter
+cd RogueBlock
 python3 -m http.server 8080
 # depois abra http://localhost:8080
 
@@ -26,7 +57,7 @@ Nenhum bundler, nenhuma dependência de build — é só HTML + ES Modules puros
 ## Árvore de arquivos
 
 ```
-crisol-do-eter/
+RogueBlock/
 ├── index.html                 # shell HTML: 4 telas + modal, importa src/main.js
 ├── styles/
 │   └── main.css                # todo o CSS do jogo (tema, telas, animações)

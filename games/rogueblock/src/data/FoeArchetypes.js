@@ -49,6 +49,18 @@ export const FOE_ARCHETYPES = [
     title: 'Cresce mais forte a cada golpe que recebe',
     bias: { hp: 1.15, dmg: 0.9, buff: true },
   },
+  {
+    name: 'Ceifador de Marés Etéreas',
+    face: '🌊',
+    title: 'Nasce onde o Crisol transborda de luz líquida',
+    bias: { hp: 1.05, dmg: 1.0, buff: true },
+  },
+  {
+    name: 'Guardião do Selo Partido',
+    face: '🗝️',
+    title: 'Última sentinela de um pacto que ninguém mais lembra',
+    bias: { hp: 1.3, dmg: 0.95, defend: true },
+  },
 ];
 
 export const FOE_PREFIXES = ['Corrompido', 'Esquecido', 'Fraturado', 'Úmbrio', 'Incandescente', 'Errante', 'Profano'];

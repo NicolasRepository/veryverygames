@@ -140,6 +140,51 @@ export const EVENT_CATALOG = [
     ],
   },
   {
+    id: 'santuario-prisma',
+    icon: '🔷',
+    title: 'O Santuário do Prisma Etéreo',
+    description: 'Fragmentos de luz cristalizada flutuam em silêncio, girando lentamente ao seu redor.',
+    choices: [
+      {
+        label: 'Absorver o Prisma (ganha uma Relíquia de Prisma Etéreo reforçada)',
+        resolve(runState) {
+          const piece = new Piece('tri', 'cyan', 2);
+          runState.deck.add(piece);
+          return { text: `A luz se dobra ao seu redor e se torna <b>${piece.name}</b>.` };
+        },
+      },
+      {
+        label: 'Deixar o Prisma em paz',
+        resolve() { return { text: 'Você recua. Os fragmentos continuam girando, indiferentes.' }; },
+      },
+    ],
+  },
+  {
+    id: 'cripta-dos-arautos',
+    icon: '⚰️',
+    title: 'A Cripta dos Arautos Esquecidos',
+    description: 'Fileiras de armaduras vazias guardam uma cripta selada. Algo ali dentro ainda pulsa.',
+    choices: [
+      {
+        label: 'Arrombar a cripta (Fragmentos garantidos, risco de armadilha)',
+        resolve(runState) {
+          const gained = 30 + Math.floor(Math.random() * 20);
+          runState.addCurrency(gained);
+          if (Math.random() < 0.4) {
+            const loss = Math.min(10, runState.adventurer.hp - 1);
+            runState.adventurer.hp -= loss;
+            return { text: `Uma armadilha etérea dispara! Você ganha <b>${gained} ${runState.currencyIcon}</b>, mas perde <b>${loss}</b> de vida.` };
+          }
+          return { text: `A cripta cede sem resistência. Você recolhe <b>${gained} ${runState.currencyIcon}</b>.` };
+        },
+      },
+      {
+        label: 'Selar a cripta novamente',
+        resolve() { return { text: 'Você prefere não perturbar o que dorme. A cripta permanece fechada.' }; },
+      },
+    ],
+  },
+  {
     id: 'poco-de-fragmentos',
     icon: '💠',
     title: 'O Poço de Fragmentos Adormecidos',

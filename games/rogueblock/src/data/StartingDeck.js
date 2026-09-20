@@ -7,4 +7,5 @@ export const STARTING_DECK = [
   ['duo', 'blue'], ['tri', 'blue'], ['corner', 'blue'],
   ['duo', 'green'], ['tri', 'green'],
   ['duo', 'purple'],
+  ['duo', 'cyan'],
 ];

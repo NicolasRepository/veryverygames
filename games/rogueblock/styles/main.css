@@ -20,12 +20,12 @@
   --blue:#44a8ff;
   --purple:#b06bff;
   --gold:#ffd23f;
+  --cyan:#38e0ff;
 
   --cell:clamp(30px, 5vw, 62px);
   --gap:4px;
 }
 *{box-sizing:border-box}
-html{ zoom: 0.85; }
 html,body{margin:0;padding:0;height:100%}
 body{
   background:var(--bg);
@@ -46,9 +46,16 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 /* ---------- topo ---------- */
 .topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
 .topbar h1{
-  margin:0;font-size:2.1rem;letter-spacing:.02em;
+  margin:0;line-height:1.15;display:flex;flex-direction:column;gap:2px;
+}
+.topbar h1 .brand{
+  font-size:2.1rem;letter-spacing:.02em;
   background:linear-gradient(90deg,var(--red),var(--purple) 55%,var(--blue));
   -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.topbar h1 .subtitle{
+  font-family:'Inter',sans-serif;font-weight:500;font-size:.7rem;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
 }
 .tag{
   font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:1rem;
@@ -199,6 +206,26 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .inventory-item{cursor:default}
 .inventory-item:hover{transform:none;border-color:var(--line)}
 
+/* ---------- compêndio ---------- */
+.codex-section{text-align:left;margin-bottom:24px}
+.codex-section h3{margin:0 0 12px;font-size:1.05rem;color:var(--brass);text-align:center}
+.codex-elements,.codex-shapes,.codex-foes{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.codex-card{
+  background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;
+  padding:14px;width:170px;text-align:center;
+}
+.codex-element{border-top:3px solid var(--accent,var(--brass))}
+.codex-card__icon{font-size:1.8rem;display:block;margin-bottom:6px}
+.codex-card__name{font-family:'Chakra Petch',sans-serif;font-weight:700;margin-bottom:4px;font-size:.95rem}
+.codex-card__desc{font-size:.8rem;color:var(--ink);line-height:1.4;margin-bottom:6px}
+.codex-card__lore{font-size:.74rem;color:var(--muted);line-height:1.4;font-style:italic}
+.codex-foe{width:220px}
+
+/* ---------- ajuda ---------- */
+.help-body{text-align:left}
+.help-body p{color:var(--ink);font-size:.95rem;line-height:1.6;margin:0 0 14px}
+.help-body b{color:var(--brass)}
+
 /* ---------- tela de mapa ---------- */
 #mapScreen{display:flex;flex-direction:column;align-items:center;gap:26px;flex:1;justify-content:center;padding:20px 0}
 #mapScreen .map-heading{text-align:center}
@@ -256,3 +283,25 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .event-outcome b{color:var(--gold)}
 
 [hidden]{display:none !important}
+
+/* ---------- telas pequenas (celular) ---------- */
+@media (max-width:640px){
+  .app{padding:12px 12px 18px}
+  .topbar{gap:10px}
+  .topbar h1 .brand{font-size:1.5rem}
+  .tag{font-size:.82rem;padding:4px 10px}
+  .ghost-btn{padding:10px 14px;font-size:.86rem;min-height:44px}
+  .panel{padding:16px}
+  .map-node{width:100%;max-width:340px}
+  .map-nodes{gap:14px}
+  .turn-bar{width:100%}
+  .turn-bar .ghost-btn,.turn-bar .end-turn{flex:1;min-width:130px;text-align:center;justify-content:center}
+  .modal{padding:22px}
+  .codex-card{width:140px}
+  .codex-foe{width:180px}
+  .event-card{padding:22px}
+}
+@media (max-width:400px){
+  :root{--cell:clamp(26px, 11vw, 40px)}
+  .topbar h1 .brand{font-size:1.25rem}
+}

@@ -17,7 +17,9 @@ export const ShapeCatalog = {
   tee:    { name: 'Arco',      tier: 2, cells: [[0, 0], [0, 1], [0, 2], [1, 1]] },
   ess:    { name: 'Onda',      tier: 2, cells: [[0, 1], [0, 2], [1, 0], [1, 1]] },
   line4:  { name: 'Coluna',    tier: 2, cells: [[0, 0], [0, 1], [0, 2], [0, 3]] },
+  zee:    { name: 'Serpente',  tier: 2, cells: [[0, 0], [1, 0], [1, 1], [2, 1]] },
   plus:   { name: 'Cruzeta',   tier: 3, cells: [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]] },
   line5:  { name: 'Pilar',     tier: 3, cells: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
+  wall:   { name: 'Bastião',   tier: 3, cells: [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]] },
   big:    { name: 'Monólito',  tier: 4, cells: [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]] },
 };

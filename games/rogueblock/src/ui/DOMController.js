@@ -40,9 +40,20 @@ export class DOMController {
 
     this._bindTopbar();
 
+    // IMPORTANTE: a tela de recompensa/fim-de-jogo é decidida a partir de
+    // runState.screen dentro de _onRunChanged, e NUNCA por uma assinatura
+    // separada de ENCOUNTER_WON/ENCOUNTER_LOST aqui. RunState também escuta
+    // esses dois eventos (em newRun()) para preencher rewardOptions/currency
+    // antes de publicar RUN_CHANGED — se este controller escutasse o mesmo
+    // evento bruto diretamente, a ordem de inscrição no EventBus faria seu
+    // handler rodar ANTES do de RunState (já que DOMController é construído
+    // antes de runState.newRun() ser chamado em main.js). Isso fazia o modal
+    // de recompensa abrir com rewardOptions ainda undefined, lançar uma
+    // exceção no meio do forEach do EventBus e interromper a própria
+    // atualização de RunState — o jogo "travava" após vencer um Confronto e
+    // vários botões pareciam parar de responder. Reagir só a RUN_CHANGED
+    // garante que o estado já está 100% consistente antes de desenhar.
     eventBus.on(EVENTS.RUN_CHANGED, rs => this._onRunChanged(rs));
-    eventBus.on(EVENTS.ENCOUNTER_WON, () => this._showRewardModal());
-    eventBus.on(EVENTS.ENCOUNTER_LOST, () => this._showGameOverModal());
   }
 
   _bindTopbar() {
@@ -52,6 +63,12 @@ export class DOMController {
     });
     document.getElementById('inventoryBtn').addEventListener('click', () => {
       this.modal.showInventory(this.runState.deck);
+    });
+    document.getElementById('codexBtn').addEventListener('click', () => {
+      this.modal.showCodex();
+    });
+    document.getElementById('helpBtn').addEventListener('click', () => {
+      this.modal.showHelp();
     });
   }
 
@@ -64,6 +81,8 @@ export class DOMController {
     if (runState.screen === 'combat') this.battle.attach(runState.encounter);
     if (runState.screen === 'shop') this.shop.render(runState);
     if (runState.screen === 'event') this.event.render(runState);
+    if (runState.screen === 'reward') this._showRewardModal();
+    if (runState.screen === 'gameover') this._showGameOverModal();
   }
 
   _showScreen(name) {
