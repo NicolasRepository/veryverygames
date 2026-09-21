@@ -108,10 +108,13 @@
       <button class="end-turn" id="eventContinueBtn" hidden>Continuar</button>
     </div>
   </section>
-</div>
 
-<div class="overlay" id="overlay" hidden>
-  <div class="modal" id="modal"></div>
+  <!-- ======================= MODAL GENÉRICO ======================= -->
+  <!-- Precisa ficar DENTRO de .app: ModalRenderer resolve #overlay e #modal
+       com root.querySelector(), e root é a .app. Fora dela, ambos viram null. -->
+  <div class="overlay" id="overlay" hidden>
+    <div class="modal" id="modal"></div>
+  </div>
 </div>
 
 <script type="module" src="./src/main.js"></script>
